@@ -1,0 +1,15 @@
+/* @tailwind base;
+@tailwind components; */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+
+@import 'additional-styles/utility-patterns.css';
+@import 'additional-styles/flatpickr.css';
+
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+@tailwind utilities;
+
+[x-cloak] {
+    display: none;
+}
