@@ -21,21 +21,32 @@
     </div>
 
     <div class="grid grid-cols-3 gap-4 mb-4">
-        <x-card class="flex flex-col">
-            <div>
-                <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
-                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">Top Countries</h2>
-                </header>
-                <div class="grow flex flex-col justify-center mt-3">
-                    <div>
-                        <canvas id="dashboard-card-06" width="389" height="260"></canvas>
-                    </div>
-                    <div id="dashboard-card-06-legend" class="px-5 pt-2 pb-6">
-                        <ul class="flex flex-wrap justify-center -m-1"></ul>
+        <div class="flex flex-col gap-4">
+            <x-card>
+                <div>
+                    <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                        <h2 class="font-semibold text-gray-800 dark:text-gray-100">Resumen de Noticias</h2>
+                    </header>
+                    <div class="grow flex flex-col justify-center mt-3">
+                        <div>
+                            <canvas id="chartBar" width="389" height="260"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </x-card>
+            </x-card>
+            <x-card>
+                <div>
+                    <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                        <h2 class="font-semibold text-gray-800 dark:text-gray-100">Scrapeo de Noticias de hoy</h2>
+                    </header>
+                    <div class="grow flex flex-col justify-center mt-3">
+                        <div>
+                            <canvas id="polarArea" width="389" height="260"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </x-card>
+        </div>
         <x-card class="col-span-2">
             <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
                 <h2 class="font-semibold text-gray-800 dark:text-gray-100">Actividad Reciente</h2>
@@ -173,48 +184,70 @@
         </x-card>
     </div>
 
-    <!-- Cards -->
-    <div class="grid grid-cols-12 gap-6">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <!-- Line chart (Acme Plus) -->
-        <x-dashboard.dashboard-card-01 :dataFeed="$dataFeed" />
+    <script>
+        const chartBardata = {
+            labels: ["Los Andes", "Sin Fronteras", "La Republica"],
+            datasets: [{
+                label: 'Total de Noticias',
+                data: [{{ $articles1->count() }}, {{ $articles2->count() }}, {{ $articles3->count() }}],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 205, 86, 0.5)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ],
+                borderWidth: 1
+            }]
+        };
 
-        <!-- Line chart (Acme Advanced) -->
-        <x-dashboard.dashboard-card-02 :dataFeed="$dataFeed" />
+        const configchartBar = {
+            type: 'bar',
+            data: chartBardata,
+            options: {},
+        };
 
-        <!-- Line chart (Acme Professional) -->
-        <x-dashboard.dashboard-card-03 :dataFeed="$dataFeed" />
+        var chartBar = new Chart(
+            document.getElementById("chartBar"),
+            configchartBar
+        );
+    </script>
 
-        <!-- Bar chart (Direct vs Indirect) -->
-        <x-dashboard.dashboard-card-04 />
+    <script>
+        const polarAreadata = {
+            labels: ["Los Andes", "Sin Fronteras", "La Republica"],
+            datasets: [{
+                label: 'Total de Noticias',
+                data: [{{ $articles1Today->count() }}, {{ $articles2Today->count() }}, {{ $articles3Today->count() }}],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 205, 86, 0.5)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ],
+                borderWidth: 1
+            }]
+        };
 
-        <!-- Line chart (Real Time Value) -->
-        <x-dashboard.dashboard-card-05 />
+        const configpolarArea = {
+            type: 'polarArea',
+            data: polarAreadata,
+            options: {},
+        };
 
-        <!-- Doughnut chart (Top Countries) -->
-        <x-dashboard.dashboard-card-06 />
-
-        <!-- Table (Top Channels) -->
-        <x-dashboard.dashboard-card-07 />
-
-        <!-- Line chart (Sales Over Time) -->
-        <x-dashboard.dashboard-card-08 />
-
-        <!-- Stacked bar chart (Sales VS Refunds) -->
-        <x-dashboard.dashboard-card-09 />
-
-        <!-- Card (Customers) -->
-        <x-dashboard.dashboard-card-10 />
-
-        <!-- Card (Reasons for Refunds) -->
-        <x-dashboard.dashboard-card-11 />
-
-        <!-- Card (Recent Activity) -->
-        <x-dashboard.dashboard-card-12 />
-
-        <!-- Card (Income/Expenses) -->
-        <x-dashboard.dashboard-card-13 />
-
-    </div>
+        var polarArea = new Chart(
+            document.getElementById("polarArea"),
+            configpolarArea
+        );
+    </script>
 
 </div>
