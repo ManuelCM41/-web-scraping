@@ -80,10 +80,10 @@
         /* Autor y fecha */
         .author,
         .date {
-            font-size: 0.9em;
+            font-size: 0.7em;
         }
     </style>
-    <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl mx-auto">
+    <div class="relative w-full max-w-2xl px-2 lg:max-w-7xl mx-auto">
         <header class="flex justify-around items-center gap-2 py-10">
             <div class="flex lg:justify-center lg:col-start-2 gap-5 items-center">
                 <svg class="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]" viewBox="0 0 62 65" fill="none"

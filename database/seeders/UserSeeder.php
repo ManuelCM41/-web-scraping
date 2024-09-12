@@ -22,6 +22,16 @@ class UserSeeder extends Seeder
             'password' => bcrypt('12345678')
         ])->assignRole('Super-admin');
 
+        User::create([
+            'dni' => '77298041',
+            'name' => 'Frank Grimaldy',
+            'surnames' => 'Chunca Mamani',
+            'phone' => fake()->numerify('###') . ' ' . fake()->numerify('###') . ' ' . fake()->numerify('###'),
+            'status' => true,
+            'email' => 'frankchunca@gmail.com',
+            'password' => bcrypt('12345678')
+        ])->assignRole('Administrador');
+
         $users = User::factory(18)->create();
 
         foreach ($users as $user) {

@@ -71,6 +71,18 @@
             "icon": "fa-solid fa-cart-flatbed-suitcase",
             "name": "Productos",
             "permissions": ["admin.products"]
+        },
+        {
+            "url": "admin.articles",
+            "icon": "fa-regular fa-newspaper",
+            "name": "Artículos",
+            "permissions": ["admin.articles"]
+        },
+        {
+            "url": "admin.articles-details",
+            "icon": "fa-solid fa-newspaper",
+            "name": "Detalle del Artículo",
+            "permissions": ["admin.articles-details"]
         }
     ]
 }

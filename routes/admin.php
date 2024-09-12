@@ -7,6 +7,7 @@ use App\Livewire\Admin\Profile;
 use App\Livewire\Admin\Roles;
 use App\Livewire\Admin\Users;
 use App\Livewire\Admin\Yape;
+use App\Livewire\Admin\Articles;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->middleware([
@@ -28,4 +29,6 @@ Route::prefix('admin')->middleware([
     Route::get('/tabla/usuarios', Users::class)->middleware('can:admin.users')->name('admin.users');
     Route::get('/tabla/categorias', Categories::class)->middleware('can:admin.categories')->name('admin.categories');
     Route::get('/tabla/productos', Dashboard::class)->middleware('can:admin.products')->name('admin.products');
+    Route::get('/tabla/articulos', Articles::class)->middleware('can:admin.articles')->name('admin.articles');
+    Route::get('/tabla/articulo-detalle', Dashboard::class)->middleware('can:admin.articles-details')->name('admin.articles-details');
 });
