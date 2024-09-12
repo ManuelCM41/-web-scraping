@@ -59,7 +59,7 @@
         /* Título del ítem */
         .item-title {
             margin: 10px 0;
-            font-size: 1em;
+            font-size: 0.8em;
             text-align: center;
         }
 
@@ -143,7 +143,7 @@
                                                 alt="{{ $articulo->titulo }}" />
                                             <h3 class="item-title">{{ $articulo->titulo }}</h3>
                                             <div class="data-info">
-                                                <img class="avatar" src="{{ $articulo->avatar }}" alt="Avatar" />
+                                                <img class="avatar" src="{{ $articulo->avatar !== 'Sin avatar' ? $articulo->avatar : 'images/usuario.png' }}" alt="Avatar" />
                                                 <span class="author">{{ $articulo->autor }}</span>
                                                 <span class="date">{{ $articulo->fecha }}</span>
                                             </div>

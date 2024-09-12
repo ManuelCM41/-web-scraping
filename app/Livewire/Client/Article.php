@@ -137,16 +137,49 @@ class Article extends Component
             // dd($imagen);
 
             // $fecha = $articulo->filter('.entry-date')->count() > 0 ? $articulo->filter('.entry-date')->text() : 'Sin fecha';
-            $fecha = 'Sin fecha';
-            if ($articulo->filter('.entry-date, .fmm-date span')->count() > 0) {
-                $fecha = $articulo->filter('.entry-date, .fmm-date span')->text() ?? $articulo->filter('.entry-date, .fmm-date span')->text();
+            // $fecha = 'Sin fecha';
+            // if ($articulo->filter('.entry-date, .fmm-date span')->count() > 0) {
+            //     $fecha = $articulo->filter('.entry-date, .fmm-date span')->text() ?? $articulo->filter('.entry-date, .fmm-date span')->text();
+            // }
+
+            $elementosFecha = $articulo->filter('.entry-date, .fmm-date span, span.ws-info span, div.post-date-bd span');
+
+            if ($elementosFecha->count() > 0) {
+                // Muestra los elementos encontrados
+                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
+
+                // Muestra el texto del primer elemento
+                $fecha = $elementosFecha->first()->text();
+            } elseif ($elementosFecha->count() > 0) {
+                // Muestra un mensaje si no se encuentran elementos
+                // dd('No se encontraron elementos con los selectores especificados.');
+                $fecha = $elementosFecha->text();
+            } else {
+                $fecha = 'Sin fecha';
             }
 
             // Extraer el nombre del autor
             // $autor = $articulo->filter('.td-post-author-name a')->count() > 0 ? $articulo->filter('.td-post-author-name a')->text() : 'Sin autor';
-            $autor = 'Sin autor';
-            if ($articulo->filter('.td-post-author-name a, .fmm-author a')->count() > 0) {
-                $autor = $articulo->filter('.td-post-author-name a, .fmm-author a')->text() ?? $articulo->filter('.td-post-author-name a, .fmm-author a')->text();
+            // $autor = 'Sin autor';
+            // if ($articulo->filter('.td-post-author-name a, .fmm-author a')->count() > 0) {
+            //     $autor = $articulo->filter('.td-post-author-name a, .fmm-author a')->text() ?? $articulo->filter('.td-post-author-name a, .fmm-author a')->text();
+            // }
+
+
+            $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+
+            if ($elementos->count() > 0) {
+                // Muestra los elementos encontrados
+                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
+
+                // Muestra el texto del primer elemento
+                $autor = $elementos->text();
+            } elseif ($elementos->count() > 0) {
+                // Muestra un mensaje si no se encuentran elementos
+                // dd('No se encontraron elementos con los selectores especificados.');
+                $autor = $elementos->first()->text();
+            } else {
+                $autor = 'Sin autor';
             }
 
             // Extraer el separador
