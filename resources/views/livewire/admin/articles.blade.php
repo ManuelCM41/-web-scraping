@@ -15,6 +15,39 @@
                 </div>
 
                 <div class="flex gap-2 justify-center">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <span class="inline-flex">
+                                <button aria-label="user"
+                                    class="px-4 py-2 flex gap-1 items-center rounded-lg bg-gradient-to-r from-emerald-700 to-green-600 focus:from-emerald-700 focus:to-green-600 active:from-green-600 active:to-green-600 text-sm text-white font-semibold tracking-wide cursor-pointer shadow-lg"
+                                    type="button">Descargar
+                                    <i class="fa-solid fa-chevron-down ms-3"></i>
+                                </button>
+                            </span>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="block px-4 py-2 text-xs text-gray-400">
+                                {{ __('CSV/EXCEL/PDF') }}
+                            </div>
+
+                            <button wire:click="createCSV()" target="_blank"
+                                class="px-4 py-2 flex gap-2 w-full items-center hover:text-green-600 hover:bg-gray-100 tracking-wide">
+                                <i class="fa-regular fa-file-excel"></i> CSV
+                            </button>
+
+                            <button wire:click="createExcel()" target="_blank"
+                                class="px-4 py-2 flex gap-2 w-full items-center hover:text-green-600 hover:bg-gray-100 tracking-wide">
+                                <i class="fa-regular fa-file-excel"></i> EXCEL
+                            </button>
+
+                            <a href="{{ URL::to('/articulos/pdf') }}" target="_blank"
+                                class="px-4 py-2 flex gap-2 w-full items-center hover:text-blue-700 hover:bg-gray-100 tracking-wide">
+                                <i class="fa-regular fa-file-lines"></i> PDF
+                            </a>
+                        </x-slot>
+                    </x-dropdown>
+
                     @can('admin.articles.create')
                         <x-button-gradient class="flex items-center gap-2" wire:click="create()">
                             <i class="fa-solid fa-plus"></i>
@@ -22,7 +55,6 @@
                         </x-button-gradient>
                     @endcan
                 </div>
-
             </div>
             <x-table-container>
                 <div wire:loading wire:target="articleState, search" class="absolute w-full h-full z-10 pt-10">

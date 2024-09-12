@@ -2,11 +2,15 @@
 
 namespace App\Livewire\Admin;
 
+use App\Exports\ArticlesExport;
 use App\Livewire\Forms\ArticleForm;
 use App\Models\Article;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Usernotnull\Toast\Concerns\WireToast;
+use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
+use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Articles extends Component
 {
@@ -100,4 +104,29 @@ class Articles extends Component
         $this->reset(['article', 'itemId']);
         $this->resetValidation();
     }
+
+    public function createPDF()
+    {
+        $total = Article::count();
+        $user = Auth::user()->name;
+        $date = date('Y-m-d');
+        $hour = date('H:i:s');
+        $articles = Article::get();
+        $pdf = FacadePdf::loadView('reports/pdf_articles', compact('articles', 'total', 'user', 'date', 'hour'));
+        $pdf->setPaper('a4', 'landscape');
+        return $pdf->download('reporte-de-articulos.pdf'); //desacarga automaticamente
+        // return $pdf->stream('reports/pdf_articles'); //abre en una pestaña como pdf
+    }
+
+
+    public function createExcel()
+    {
+        return Excel::download(new ArticlesExport(), 'reporte-de-articulos.xlsx');
+    }
+
+    public function createCSV()
+    {
+        return Excel::download(new ArticlesExport(), 'reporte-de-articulos.csv', \Maatwebsite\Excel\Excel::CSV);
+    }
+
 }
