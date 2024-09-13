@@ -3,12 +3,14 @@
 namespace App\Livewire\Client;
 
 use App\Models\Article as ModelsArticle;
+use App\Models\Category;
 use Livewire\Component;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Livewire\WithPagination;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Str;
 
 class Article extends Component
 {
@@ -99,8 +101,10 @@ class Article extends Component
         // Seleccionar todos los artículos por el selector CSS de clase
         // $articulos = $crawler->filter('.td-module-container');
         $articulos = $crawler->filter('.tdi_88, .td-category-pos-above, .sp-pcp-post-thumb-area, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12');
+        $categorias = $crawler->filter('.menu-item-object-category, .Header_container-header_menu-secciones-item__3sngP, .bd_menu_item');
 
         $datosArticulos = [];
+        $datosCategorias = [];
 
         // Recorrer cada artículo y extraer el título, el extracto, la categoría y la imagen
         $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
@@ -165,7 +169,6 @@ class Article extends Component
             //     $autor = $articulo->filter('.td-post-author-name a, .fmm-author a')->text() ?? $articulo->filter('.td-post-author-name a, .fmm-author a')->text();
             // }
 
-
             $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
 
             if ($elementos->count() > 0) {
@@ -228,7 +231,39 @@ class Article extends Component
             ];
         });
 
-        return $datosArticulos;
+        $categorias->each(function (Crawler $categoria) use (&$datosCategorias) {
+            $titulo = $categoria->filter('div.tdb-menu-item-text, .Header_container-header_menu-secciones-link__gOmTh, span.menu-label')->count() > 0 ? $categoria->filter('div.tdb-menu-item-text, .Header_container-header_menu-secciones-link__gOmTh, span.menu-label')->text() : 'Sin título';
+            // $url = $categoria->filter('a')->count() > 0 ? $categoria->filter('a')->attr('href') : 'Sin URL';
+            $slug = Str::slug($titulo);
+
+            $url = 'Sin URL';
+            $href = $categoria->filter('a')->attr('href');
+            // Verificar si la URL del 'href' es relativa y completarla
+            if (strpos($href, 'http') === false) {
+                $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
+                $url = $baseUrl . $href;
+            } else {
+                $url = $href;
+            }
+
+            // Separar URL principal y el resto del path
+            if ($url !== 'Sin URL') {
+                // Extraer la parte principal de la URL
+                $urlPrincipal = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/';
+            }
+
+            $datosCategorias[] = [
+                'titulo' => $titulo,
+                'url' => $url,
+                'urlPrincipal' => $urlPrincipal,
+                'slug' => $slug,
+            ];
+        });
+
+        return [
+            'articulos' => $datosArticulos,
+            'categorias' => $datosCategorias,
+        ];
     }
 
     public function reemplazarGuionPorEspacio($categoria)
@@ -251,12 +286,14 @@ class Article extends Component
 
             if ($html !== false) {
                 // Extraer los datos
-                $articulos = $this->extraerDatos($html);
-
+                // $articulos = $this->extraerDatos($html);
+                $datosExtraidos = $this->extraerDatos($html);
+                $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+                $categorias = $datosExtraidos['categorias']; // Acceder al array de categorías
+                // dd($datosExtraidos);
                 foreach ($articulos as $articulo) {
                     ModelsArticle::updateOrCreate(
                         [
-                            // 'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
                             'url' => $articulo['url'],
                         ],
                         [
@@ -271,6 +308,25 @@ class Article extends Component
                             'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
                         ],
                     );
+                }
+
+                foreach ($categorias as $categoria) {
+                    if ($categoria['titulo'] != 'Sin título') {
+                        if ($categoria['titulo'] == 'INICIO' || $categoria['titulo'] == 'SUSCRÍBETE') {
+                            // No hacer nada si el título es "INICIO" o "SUSCRÍBETE"
+                        } else {
+                            Category::updateOrCreate(
+                                [
+                                    'url' => $categoria['url'],
+                                ],
+                                [
+                                    'urlPrincipal' => $categoria['urlPrincipal'],
+                                    'name' => $categoria['titulo'],
+                                    'slug' => $categoria['slug'],
+                                ],
+                            );
+                        }
+                    }
                 }
             } else {
                 return;
