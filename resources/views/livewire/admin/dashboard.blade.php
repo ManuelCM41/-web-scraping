@@ -13,7 +13,7 @@
                 counter="{{ $categories->count() }}" color="red" />
         </x-card>
         <x-card>
-            <x-card-counter-section url="#0" label="Productos" counter="{{ $users->count() }}" color="yellow" />
+            <x-card-counter-section url="{{ route('admin.articles') }}" label="Noticias" counter="{{ $articles->count() }}" color="yellow" />
         </x-card>
         <x-card>
             <x-card-counter-section url="#0" label="Usuarios" counter="{{ $users->count() }}" color="green" />

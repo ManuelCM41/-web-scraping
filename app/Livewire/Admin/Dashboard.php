@@ -21,6 +21,7 @@ class Dashboard extends Component
         $dataFeed = new DataFeed();
         $users = User::all();
         $categories = Category::all();
+        $articles = Article::all();
 
         $this->articles1 = Article::where('urlPrincipal', 'https://losandes.com.pe/')->get();
         $this->articles2 = Article::where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
@@ -34,6 +35,6 @@ class Dashboard extends Component
         $this->articles2Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
         $this->articles3Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://larepublica.pe/')->get();
 
-        return view('livewire.admin.dashboard', compact('dataFeed', 'users', 'categories'));
+        return view('livewire.admin.dashboard', compact('dataFeed', 'users', 'categories', 'articles'));
     }
 }

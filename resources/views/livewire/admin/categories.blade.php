@@ -3,9 +3,9 @@
 
 <div>
 
-    {{-- @include('livewire.admin.modal.user')
+    @include('livewire.admin.modal.category')
 
-    @include('livewire.admin.modal.delete') --}}
+    @include('livewire.admin.modal.delete')
 
     <x-card>
         <div class="relative flex flex-col w-full h-full text-gray-700 dark:text-gray-400">
@@ -34,11 +34,10 @@
                 <table class="w-full text-left table-auto min-w-max">
                     <x-table-thead>
                         <tr>
-                            <th class="p-3 font-normal text-center">Categoria</th>
+                            <th class="p-3 font-normal text-center">Título</th>
                             <th class="p-3 font-normal">Slug</th>
-                            <th class="p-3 font-normal">Estado</th>
+                            <th class="p-3 font-normal">Url</th>
                             <th class="p-3 font-normal">Actualizado</th>
-                            <th class="p-3 font-normal">Usuario</th>
                             <th class="p-3 font-normal text-center">Acciones</th>
                         </tr>
                     </x-table-thead>
@@ -62,11 +61,11 @@
                                 </td>
                                 <td class="p-3">
                                     <x-tag class="w-max" role="7"
-                                        style="text-transform: none">{{ $category->name }}</x-tag>
+                                        style="text-transform: none">{{ $category->slug }}</x-tag>
                                 </td>
                                 <td class="p-3">
-                                    <x-switch option="{{ $category->status }}" left="Inactivo" right="Activo"
-                                        wire:click="changeStatus({{ $category->id }})" />
+                                    <x-tag class="w-max" role="7"
+                                        style="text-transform: none">{{ $category->url }}</x-tag>
                                 </td>
                                 <td class="p-3">
                                     <div>
@@ -77,11 +76,6 @@
                                         <i class="fa-regular fa-clock fa-fw"></i>
                                         {{ \Carbon\Carbon::parse($category->updated_at)->format('H:i:s') }}
                                     </div>
-                                </td>
-                                <td class="p-3">
-                                    <x-tag class="w-max" role="2" style="text-transform: none">
-                                        {{ $category->user->name }} {{ $category->user->surnames }}
-                                    </x-tag>
                                 </td>
                                 <td class="p-3 w-10">
                                     <div class="flex justify-center relative">
