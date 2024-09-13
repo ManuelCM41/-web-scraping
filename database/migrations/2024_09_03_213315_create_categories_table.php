@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug');
-            $table->string('url');
-            $table->string('urlPrincipal');
-            $table->unsignedBigInteger('user_id');
+            $table->string('slug')->nullable();
+            $table->string('url')->nullable();
+            $table->string('urlPrincipal')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
         });
     }

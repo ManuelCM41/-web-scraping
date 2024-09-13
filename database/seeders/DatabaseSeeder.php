@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         File::makeDirectory('public/storage/galery');
 
         $this->call([
-            DashboardTableSeeder::class,
+            // DashboardTableSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
             YapeSeeder::class,
