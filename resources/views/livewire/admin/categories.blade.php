@@ -81,13 +81,13 @@
                                     <div class="flex justify-center relative">
                                         @can('admin.categories.show')
                                             <x-button-tooltip hover="blue" content="Visualizar"
-                                                wire:click="showUserDetail({{ $category }})">
+                                                wire:click="showCategoryDetail({{ $category->id }})">
                                                 <i class="fa-solid fa-eye fa-fw"></i>
                                             </x-button-tooltip>
                                         @endcan
                                         @can('admin.categories.edit')
                                             <x-button-tooltip hover="green" content="Editar"
-                                                wire:click="edit({{ $category }})">
+                                                wire:click="edit({{ $category->id }})">
                                                 <i class="fa-solid fa-pen fa-fw"></i>
                                             </x-button-tooltip>
                                         @endcan

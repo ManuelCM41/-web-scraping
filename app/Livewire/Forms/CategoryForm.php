@@ -16,9 +16,9 @@ class CategoryForm extends Form
     {
         return [
             'name' => 'required',
-            'slug' => 'required',
-            'url' => 'required',
-            'urlPrincipal' => 'required',
+            'slug' => 'nullable',
+            'url' => 'nullable',
+            'urlPrincipal' => 'nullable',
         ];
     }
 

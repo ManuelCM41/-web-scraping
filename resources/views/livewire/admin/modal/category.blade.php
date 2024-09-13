@@ -1,16 +1,15 @@
 <x-dialog-modal wire:model="isOpen" maxWidth="lg">
     <x-slot name="title">
-        <i class="fa-solid fa-{{ $showCategory ? 'address-card fa-lg' : ($itemId ? 'user-pen' : 'user-plus') }} mr-2"></i>
+        <i
+            class="fa-solid fa-{{ $showCategory ? 'address-card fa-lg' : ($itemId ? 'user-pen' : 'user-plus') }} mr-2"></i>
         {{ $showCategory ? 'Detalle de la Categoría' : ($itemId ? 'Actualizar categoría' : 'Registrar nueva categoría') }}
     </x-slot>
     <x-slot name="content">
         <form autocomplete="off">
             <div class="flex flex-col gap-3">
-                <div class="grid {{ $itemId ? 'grid-cols-3' : 'grid-cols-1' }} gap-3">
-                    <div class="col-span-2 flex flex-col gap-3">
-                        <x-input-label for="form.name" label="Título" wire:model.live="form.name" type="text"
-                            disabled="{{ $showCategory }}" />
-                    </div>
+                <div class="grid gap-3">
+                    <x-input-label for="form.name" label="Título" wire:model.live="form.name" type="text"
+                        disabled="{{ $showCategory }}" />
                 </div>
             </div>
         </form>

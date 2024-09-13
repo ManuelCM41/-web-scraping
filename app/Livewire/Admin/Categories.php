@@ -7,6 +7,7 @@ use App\Models\Category;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Usernotnull\Toast\Concerns\WireToast;
+use Illuminate\Support\Str;
 
 class Categories extends Component
 {
@@ -21,38 +22,40 @@ class Categories extends Component
     public CategoryForm $form;
     public ?Category $category;
 
+    protected $listeners = ['render', 'delete' => 'delete'];
+
     public function render()
     {
         $categories = Category::where('name', 'like', '%' . $this->search . '%')->latest('id')->paginate(10);
         return view('livewire.admin.categories', compact('categories'));
     }
 
-    public function changeStatus($id){
-        $category = Category::find($id);
-        $category->update(['status' => !$category->status]);
-        toast()->success('Registro actualizado correctamente', 'Mensaje de éxito')->push();
-    }
     public function create()
     {
         $this->resetForm();
         $this->isOpen = true;
     }
 
-    public function edit(Category $category)
+    public function edit($id)
     {
         $this->resetForm();
         $this->isOpen = true;
-        $this->itemId = $category->id;
-        $this->category = $category;
-        $this->form->fill($category);
+        $this->itemId = $id;
+        $this->category = Category::findOrFail($id);
+        $this->form->fill($this->category);
     }
 
     public function store()
     {
         $this->validate();
         $categoryData = $this->form->toArray();
+
         if (!isset($this->category->id)) {
+            $slug = Str::slug($this->form->name);
+            $categoryData['slug'] = $slug;
+            $categoryData['url'] = 'Sin url';
             Category::create($categoryData);
+
             toast()->success('Categoría creado correctamente', 'Mensaje de éxito')->push();
         } else {
             $this->category->update($categoryData);
@@ -74,7 +77,7 @@ class Categories extends Component
         $this->reset('isOpenDelete', 'itemId');
     }
 
-    public function showCategoryDetail(Category $category)
+    public function showCategoryDetail($category)
     {
         $this->showCategory = true;
         $this->edit($category);
