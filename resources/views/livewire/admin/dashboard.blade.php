@@ -28,9 +28,23 @@
                     <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
                         <h2 class="font-semibold text-gray-800 dark:text-gray-100">Resumen de Noticias</h2>
                     </header>
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <x-select-label for="form.status" label="Mes" wire:model.live="monthSelected">
+                            <option value="" selected>Todos</option>
+                            @foreach ($meses as $mes)
+                                <option value="{{ $mes['id'] }}">{{ $mes['name'] }}</option>
+                            @endforeach
+                        </x-select-label>
+                        <x-select-label label="Año" wire:model.live="yearSelected">
+                            @foreach ($years as $year)
+                                <option value="{{ $year }}">
+                                    {{ $year }}</option>
+                            @endforeach
+                        </x-select-label>
+                    </div>
                     <div class="grow flex flex-col justify-center mt-3">
-                        <div>
-                            <canvas id="chartBar" width="389" height="260"></canvas>
+                        <div wire:ignore>
+                            <canvas id="chartBar" height="260"></canvas>
                         </div>
                     </div>
                 </div>
@@ -41,8 +55,8 @@
                         <h2 class="font-semibold text-gray-800 dark:text-gray-100">Scrapeo de Noticias de hoy</h2>
                     </header>
                     <div class="grow flex flex-col justify-center mt-3">
-                        <div>
-                            <canvas id="polarArea" width="389" height="260"></canvas>
+                        <div wire:ignore>
+                            <canvas id="polarArea"></canvas>
                         </div>
                     </div>
                 </div>
@@ -208,14 +222,35 @@
                 </div>
             </x-card>
             <x-card>
-                <div>
-                    <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
-                        <h2 class="font-semibold text-gray-800 dark:text-gray-100">Resumen de Noticias por meses</h2>
-                    </header>
-                    <div class="grow flex flex-col justify-center mt-3">
-                        <div>
-                            <canvas id="chartBarMonths" width="389" height="150"></canvas>
-                        </div>
+                <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">Resumen de Noticias por meses
+                    </h2>
+                </header>
+                <div class="grid grid-cols-3 gap-3 mt-3">
+                    <x-select-label for="form.status" label="Revista" wire:model.live="form.status">
+                        <option value="" selected>Todos</option>
+                        <option value="https://losandes.com.pe/">Los Andes</option>
+                        <option value="https://diariosinfronteras.com.pe/">Sin Fronteras</option>
+                        <option value="https://larepublica.pe/">La Republica</option>
+                    </x-select-label>
+                    <x-select-label for="form.status" label="Categoria" wire:model.live="form.status">
+                        <option value="" selected>Todos</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}">
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </x-select-label>
+                    <x-select-label for="form.status" label="Año" wire:model.live="form.status">
+                        @foreach ($years as $year)
+                            <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
+                                {{ $year }}</option>
+                        @endforeach
+                    </x-select-label>
+                </div>
+                <div class="grow flex flex-col justify-center mt-3">
+                    <div wire:ignore>
+                        <canvas id="chartBarMonths" width="389" height="150"></canvas>
                     </div>
                 </div>
             </x-card>
@@ -224,12 +259,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script>
+    <script type="module">
+        // Configuración inicial del gráfico
         const chartBardata = {
             labels: ["Los Andes", "Sin Fronteras", "La Republica"],
             datasets: [{
                 label: 'Total de Noticias',
-                data: [{{ $articles1->count() }}, {{ $articles2->count() }}, {{ $articles3->count() }}],
+                data: [{{ $articles1->count() }}, {{ $articles2->count() }},
+                    {{ $articles3->count() }}
+                ],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.5)',
                     'rgba(54, 162, 235, 0.5)',
@@ -254,9 +292,7 @@
             document.getElementById("chartBar"),
             configchartBar
         );
-    </script>
 
-    <script>
         const polarAreadata = {
             labels: ["Los Andes", "Sin Fronteras", "La Republica"],
             datasets: [{
@@ -288,11 +324,22 @@
             document.getElementById("polarArea"),
             configpolarArea
         );
+
+        Livewire.on('post-created', event => {
+            // Actualizar los datos del gráfico
+            chartBar.data.datasets[0].data = event[0].dataAll;
+            chartBar.update();
+
+            polarArea.data.datasets[0].data = event[0].dataToday;
+            polarArea.update();
+        })
     </script>
 
     <script>
         const chartBarMonthsdata = {
-            labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"],
+            labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre",
+                "Noviembre", "Diciembre"
+            ],
             datasets: [{
                 label: 'Total de Noticias',
                 data: [65, 59, 80, 81, 56, 55, 40, 65, 59, 80, 81, 56],

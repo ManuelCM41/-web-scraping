@@ -23,8 +23,8 @@ class DatabaseSeeder extends Seeder
             // DashboardTableSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
-            YapeSeeder::class,
-            CategorySeeder::class,
+            // YapeSeeder::class,
+            // CategorySeeder::class,
         ]);
     }
 }

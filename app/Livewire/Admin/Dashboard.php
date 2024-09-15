@@ -15,17 +15,48 @@ class Dashboard extends Component
     public $articles1, $articles2, $articles3;
     public $articles1Today, $articles2Today, $articles3Today;
     public $articles1Yesterday, $articles2Yesterday, $articles3Yesterday;
+    public $yearSelected, $monthSelected;
+    public $years, $meses;
+
+    public function __construct()
+    {
+        $this->yearSelected = date('Y');
+    }
 
     public function render()
     {
-        $dataFeed = new DataFeed();
         $users = User::all();
         $categories = Category::all();
         $articles = Article::all();
 
-        $this->articles1 = Article::where('urlPrincipal', 'https://losandes.com.pe/')->get();
-        $this->articles2 = Article::where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
-        $this->articles3 = Article::where('urlPrincipal', 'https://larepublica.pe/')->get();
+        $this->generateYears();
+        $this->meses();
+
+        $this->articles1 = Article::where('urlPrincipal', 'https://losandes.com.pe/')
+            ->when($this->yearSelected, function ($query) {
+                $query->whereYear('created_at', $this->yearSelected);
+            })
+            ->when($this->monthSelected, function ($query) {
+                $query->whereMonth('created_at', $this->monthSelected);
+            })
+            ->get();
+
+        $this->articles2 = Article::where('urlPrincipal', 'https://diariosinfronteras.com.pe/')
+            ->when($this->yearSelected, function ($query) {
+                $query->whereYear('created_at', $this->yearSelected);
+            })
+            ->when($this->monthSelected, function ($query) {
+                $query->whereMonth('created_at', $this->monthSelected);
+            })
+            ->get();
+        $this->articles3 = Article::where('urlPrincipal', 'https://larepublica.pe/')
+            ->when($this->yearSelected, function ($query) {
+                $query->whereYear('created_at', $this->yearSelected);
+            })
+            ->when($this->monthSelected, function ($query) {
+                $query->whereMonth('created_at', $this->monthSelected);
+            })
+            ->get();
 
         $this->articles1Today = Article::whereDate('created_at', Carbon::today())->where('urlPrincipal', 'https://losandes.com.pe/')->get();
         $this->articles2Today = Article::whereDate('created_at', Carbon::today())->where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
@@ -35,6 +66,46 @@ class Dashboard extends Component
         $this->articles2Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
         $this->articles3Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://larepublica.pe/')->get();
 
-        return view('livewire.admin.dashboard', compact('dataFeed', 'users', 'categories', 'articles'));
+
+        if ($this->yearSelected) {
+            $this->dispatch('post-created', [
+                'dataAll' => [
+                    $this->articles1->count(),
+                    $this->articles2->count(),
+                    $this->articles3->count()
+                ],
+                'dataToday' => [
+                    $this->articles1Today->count(),
+                    $this->articles2Today->count(),
+                    $this->articles3Today->count()
+                ]
+            ]);
+        }
+
+        return view('livewire.admin.dashboard', compact('users', 'categories', 'articles'));
+    }
+
+    public function generateYears()
+    {
+        $currentYear = Carbon::now()->year;
+        $this->years = range(2020, $currentYear);
+    }
+
+    public function meses()
+    {
+        $this->meses = [
+            ['id' => 1,  'name' => 'Enero'],
+            ['id' => 2,  'name' => 'Febrero'],
+            ['id' => 3,  'name' => 'Marzo'],
+            ['id' => 4,  'name' => 'Abril'],
+            ['id' => 5,  'name' => 'Mayo'],
+            ['id' => 6,  'name' => 'Junio'],
+            ['id' => 7,  'name' => 'Julio'],
+            ['id' => 8,  'name' => 'Agosto'],
+            ['id' => 9,  'name' => 'Septiembre'],
+            ['id' => 10, 'name' => 'Octubre'],
+            ['id' => 11, 'name' => 'Noviembre'],
+            ['id' => 12, 'name' => 'Diciembre'],
+        ];
     }
 }
