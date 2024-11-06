@@ -61,6 +61,7 @@
             margin: 10px 0;
             font-size: 0.8em;
             text-align: center;
+            height: 40px;
         }
 
         /* Información del ítem */
@@ -68,6 +69,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            margin-top: 15px;
         }
 
         /* Avatar */
@@ -84,7 +86,7 @@
         }
     </style>
     <div class="relative w-full max-w-2xl px-2 lg:max-w-7xl mx-auto">
-        <header class="flex justify-around items-center gap-2 py-10">
+        <header class="flex justify-around items-center gap-2 py-5">
             <div class="flex lg:justify-center lg:col-start-2 gap-5 items-center">
                 <svg class="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]" viewBox="0 0 62 65" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
@@ -95,7 +97,7 @@
                 <span class="text-3xl">Web Scraping</span>
             </div>
             @if (Route::has('login'))
-                <nav class="-mx-3 flex flex-1 justify-end">
+                <nav class="-mx-3 flex flex-1 justify-end gap-3">
                     @auth
                         <a href="{{ route('admin.home') }}"
                             class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20]">
@@ -103,15 +105,15 @@
                         </a>
                     @else
                         <a href="{{ route('login') }}"
-                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20]">
+                           class="rounded-lg px-4 py-2 bg-[#FF2D20] text-white font-semibold shadow-md transition duration-300 ease-in-out transform hover:bg-[#e6221d] hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#FF2D20] focus:ring-opacity-50">
                             Log in
                         </a>
 
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}"
-                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20]">
-                                Register
-                            </a>
+                        <a href="{{ route('register') }}"
+                           class="rounded-lg px-4 py-2 bg-[#FF2D20] text-white font-semibold shadow-md transition duration-300 ease-in-out transform hover:bg-[#e6221d] hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#FF2D20] focus:ring-opacity-50">
+                            Register
+                        </a>
                         @endif
                     @endauth
                 </nav>
@@ -123,8 +125,28 @@
                     <div class="w-full md:w-72">
                         <x-input-label wire:model.live="search" search label="Buscar" />
                     </div>
+
+                    <x-toasts :showModal="$showModal" />
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-select-label label="Diario" wire:model.live="diarioSelected">
+                            <option value="" selected>Todos</option>
+                            @foreach ($diarios as $url => $nombre)
+                                <option value="{{ $url }}">{{ $nombre }}</option>
+                            @endforeach
+                        </x-select-label>
+
+                        @if ($diariosCategoria->isNotEmpty())
+                            <x-select-label label="Categoría" wire:model.live="categoriaSelected">
+                                <option value="" selected>Todos</option>
+                                @foreach ($diariosCategoria as $categoria)
+                                    <option value="{{ $categoria->slug }}">{{ $categoria->name }}</option>
+                                @endforeach
+                            </x-select-label>
+                        @endif
+                    </div>
                     <div class="flex justify-center gap-2">
-                        <x-button-gradient class="flex items-center gap-2" wire:click="create()">
+                        <x-button-gradient class="flex items-center gap-2" wire:click="descargarCSV()">
                             <i class="fa-solid fa-plus"></i>
                             <span class="hidden sm:block">Decargar CSV</span>
                         </x-button-gradient>
@@ -143,7 +165,9 @@
                                                 alt="{{ $articulo->titulo }}" />
                                             <h3 class="item-title">{{ $articulo->titulo }}</h3>
                                             <div class="data-info">
-                                                <img class="avatar" src="{{ $articulo->avatar !== 'Sin avatar' ? $articulo->avatar : 'images/usuario.png' }}" alt="Avatar" />
+                                                <img class="avatar"
+                                                    src="{{ $articulo->avatar !== 'Sin avatar' ? $articulo->avatar : 'images/usuario.png' }}"
+                                                    alt="Avatar" />
                                                 <span class="author">{{ $articulo->autor }}</span>
                                                 <span class="date">{{ $articulo->fecha }}</span>
                                             </div>

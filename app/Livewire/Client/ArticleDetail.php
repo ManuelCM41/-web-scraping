@@ -134,9 +134,6 @@ class ArticleDetail extends Component
                 // Combinar todos los bloques <style> en una sola cadena
                 $styleContent = implode(' ', $styles);
 
-                // Mostrar el contenido de los estilos para depuración
-                // dd($styleContent);
-
                 // Buscar y extraer la URL de la imagen usando una expresión regular en el contenido de los estilos
                 if (preg_match('/\.tdi_85\s*\.tdb-featured-image-bg\s*\{[^}]*background:\s*url\(["\'](.*?)["\']\)/', $styleContent, $matches)) {
                     $imagen = $matches[1]; // La URL está en la primera captura
@@ -179,15 +176,26 @@ class ArticleDetail extends Component
             if ($html !== false) {
                 // Extraer los datos
                 $articulos = $this->extraerDatos($html);
-                // dd($articulos, $datosArticulos);
-                foreach ($articulos as $articulo) {
-                    // Preparar los párrafos
-                    $parrafos = $articulo['contenido'];
+
+                // Filtrar los artículos que tienen información más completa
+                $articulosCompletos = array_filter($articulos, function ($articulo) {
+                    return $articulo['titulo'] != 'Sin título' && $articulo['imagen'] != 'Sin imagen' && $articulo['categoria'] != 'Sin categoria' || $articulo['fecha'] != 'Sin fecha' && $articulo['contenido'] != [];
+                });
+
+                // Si existen artículos completos, tomar el primero o el más completo
+                $articuloCompleto = reset($articulosCompletos);
+
+                // dd($articuloCompleto); // Ver el artículo más completo
+
+                if ($articuloCompleto) {
+                    // Procesar el artículo completo
+                    $parrafos = $articuloCompleto['contenido'];
                     $imagenArticle = Article::where('url', $datosArticulos)->first();
 
-                    if ($articulo['categoria'] != 'Sin categoria') {
-                        // dd($articulo['categoria']);
-                        $imagenArticle->titulo = $articulo['titulo'];
+                    if ($articuloCompleto['categoria'] != 'Sin categoria') {
+                        $imagenArticle->titulo = $articuloCompleto['titulo'];
+                        $imagenArticle->categoria = $articuloCompleto['categoria'];
+                        $imagenArticle->fecha = $articuloCompleto['fecha'];
                         $imagenArticle->save();
 
                         // Definir los campos de la base de datos para los párrafos
@@ -196,19 +204,18 @@ class ArticleDetail extends Component
                             $campo = 'p' . ($i + 1); // Genera los campos p1, p2, p3, etc.
                             $parrafoCampos[$campo] = $parrafos[$i]; // Asigna el contenido del párrafo a cada campo
                         }
+
                         // Guardar o actualizar el artículo en la base de datos
                         ModelsArticleDetail::updateOrCreate(
                             [
-                                'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
+                                'titulo' => $articuloCompleto['titulo'], // Condición para buscar el artículo existente
                             ],
                             array_merge(
                                 [
-                                    'categoria' => $articulo['categoria'],
-                                    // 'imagen' => $imagenArticle['imagen'],
-                                    'autor' => $articulo['autor'],
-                                    'fecha' => $articulo['fecha'],
-                                    'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : $imagenArticle['imagen'],
-                                    // 'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
+                                    'categoria' => $articuloCompleto['categoria'],
+                                    'autor' => $articuloCompleto['autor'],
+                                    'fecha' => $articuloCompleto['fecha'],
+                                    'imagen' => $articuloCompleto['imagen'] !== 'Sin imagen' ? $articuloCompleto['imagen'] : $imagenArticle['imagen'],
                                 ],
                                 $parrafoCampos, // Agregar los párrafos como parte de los campos de actualización
                             ),

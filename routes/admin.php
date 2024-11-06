@@ -22,7 +22,6 @@ Route::prefix('admin')->middleware([
     Route::get('/sistema/dashboard/general', Dashboard::class)->middleware('can:admin.home')->name('admin.home');
 
     Route::get('/pagina/administrar-cuenta/perfil-personal', Profile::class)->middleware('can:admin.manage.profile')->name('admin.manage.profile');
-    Route::get('/pagina/administrar-cuenta/yape', Yape::class)->middleware('can:admin.manage.yape')->name('admin.manage.yape');
 
     Route::get('/pagina/seguridad/roles', Roles::class)->middleware('can:admin.roles')->name('admin.roles');
 

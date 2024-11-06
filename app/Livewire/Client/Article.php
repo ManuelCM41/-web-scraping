@@ -6,7 +6,7 @@ use App\Models\Article as ModelsArticle;
 use App\Models\Category;
 use Livewire\Component;
 use GuzzleHttp\Client;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -17,17 +17,66 @@ class Article extends Component
     use WithPagination;
 
     public $search;
-    public $category, $categoriaSeleccionada;
+    public $category;
+    public $diarios, $diariosCategoria;
+    public $diarioSelected, $categoriaSelected;
 
-    protected $listeners = ['render', 'delete'];
+    public $showModal = false;
+
+    protected $listeners = ['render', 'delete', 'openModal', 'closeModal'];
+
+    public function openModal()
+    {
+        $this->showModal = true;
+    }
 
     public function render()
     {
+        $articulos = ModelsArticle::orderBy('created_at', 'desc')
+            ->paginate(16);
+
         if ($this->search != null) {
-            $this->guardarArticulos($this->search);
+            $this->showModal;
+            // Verifica si el usuario está autenticado
+            if (!Auth::check()) {
+                $this->openModal();
+            }
         }
 
-        $articulos = ModelsArticle::where('url', 'like', '%' . $this->search . '%')->paginate(16);
+        // Definimos los diarios
+        $this->diarios = [
+            'https://diariosinfronteras.com.pe/' => 'Diario Sin Fronteras',
+            'https://losandes.com.pe/' => 'Los Andes',
+            'https://larepublica.pe/' => 'La República',
+        ];
+
+        $this->diariosCategoria = Category::all();
+
+        if (Auth::check()) {
+            $this->guardarArticulos($this->search);
+            $articulos = ModelsArticle::where('url', 'like', '%' . $this->search . '%')
+                ->orderBy('created_at', 'desc')
+                ->paginate(16);
+
+            // Si se ha seleccionado un diario, filtramos las categorías por la URL correspondiente
+            if ($this->diarioSelected) {
+                $this->diariosCategoria = Category::where('urlPrincipal', $this->diarioSelected)->get();
+                $articulos = ModelsArticle::where('urlPrincipal', $this->diarioSelected)
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(16);
+                if ($this->categoriaSelected) {
+                    # code...
+                    $this->guardarArticulosCategoria($this->diarioSelected, $this->categoriaSelected);
+                    $articulos = ModelsArticle::where('urlPrincipal', $this->diarioSelected)
+                        ->where('categoria', $this->categoriaSelected)
+                        ->orderBy('created_at', 'desc')
+                        ->paginate(16);
+                }
+            } else {
+                // Si no hay diario seleccionado, mostramos todas las categorías
+                $this->diariosCategoria = Category::all();
+            }
+        }
 
         return view('livewire.client.article', compact('articulos'));
     }
@@ -99,7 +148,6 @@ class Article extends Component
         $crawler = new Crawler($html);
 
         // Seleccionar todos los artículos por el selector CSS de clase
-        // $articulos = $crawler->filter('.td-module-container');
         $articulos = $crawler->filter('.tdi_88, .td-category-pos-above, .sp-pcp-post-thumb-area, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12');
         $categorias = $crawler->filter('.menu-item-object-category, .Header_container-header_menu-secciones-item__3sngP, .bd_menu_item');
 
@@ -138,13 +186,6 @@ class Article extends Component
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
                 }
             }
-            // dd($imagen);
-
-            // $fecha = $articulo->filter('.entry-date')->count() > 0 ? $articulo->filter('.entry-date')->text() : 'Sin fecha';
-            // $fecha = 'Sin fecha';
-            // if ($articulo->filter('.entry-date, .fmm-date span')->count() > 0) {
-            //     $fecha = $articulo->filter('.entry-date, .fmm-date span')->text() ?? $articulo->filter('.entry-date, .fmm-date span')->text();
-            // }
 
             $elementosFecha = $articulo->filter('.entry-date, .fmm-date span, span.ws-info span, div.post-date-bd span');
 
@@ -162,29 +203,6 @@ class Article extends Component
                 $fecha = 'Sin fecha';
             }
 
-            // Extraer el nombre del autor
-            // $autor = $articulo->filter('.td-post-author-name a')->count() > 0 ? $articulo->filter('.td-post-author-name a')->text() : 'Sin autor';
-            // $autor = 'Sin autor';
-            // if ($articulo->filter('.td-post-author-name a, .fmm-author a')->count() > 0) {
-            //     $autor = $articulo->filter('.td-post-author-name a, .fmm-author a')->text() ?? $articulo->filter('.td-post-author-name a, .fmm-author a')->text();
-            // }
-
-            $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
-
-            if ($elementos->count() > 0) {
-                // Muestra los elementos encontrados
-                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
-
-                // Muestra el texto del primer elemento
-                $autor = $elementos->text();
-            } elseif ($elementos->count() > 0) {
-                // Muestra un mensaje si no se encuentran elementos
-                // dd('No se encontraron elementos con los selectores especificados.');
-                $autor = $elementos->first()->text();
-            } else {
-                $autor = 'Sin autor';
-            }
-
             // Extraer el separador
             $separador = $articulo->filter('.td-post-author-name span')->count() > 0 ? $articulo->filter('.td-post-author-name span')->text() : 'Sin separador';
 
@@ -195,10 +213,9 @@ class Article extends Component
             $urlCompleta = $articulo->filter('.entry-title a')->count() > 0 ? $articulo->filter('.entry-title a')->attr('href') : 'Sin URL';
 
             // Extraer la parte específica de la URL
-            // $url = $urlCompleta !== 'Sin URL' ? basename(parse_url($urlCompleta, PHP_URL_PATH)) : 'Sin URL';
-            // $url = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->count() > 0 ? $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href') : 'Sin URL';
             $url = 'Sin URL';
             $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+
             // Verificar si la URL del 'href' es relativa y completarla
             if (strpos($href, 'http') === false) {
                 $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
@@ -211,6 +228,42 @@ class Article extends Component
             if ($url !== 'Sin URL') {
                 // Extraer la parte principal de la URL
                 $urlPrincipal = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/';
+
+                if ($urlPrincipal === 'https://losandes.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario los Andes';
+                    }
+                } elseif ($urlPrincipal === 'https://diariosinfronteras.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario Sin Fronteras';
+                    }
+                } else {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario la República';
+                    }
+                }
 
                 // Extraer la parte restante (path)
                 $path = str_replace($urlPrincipal, '', $url);
@@ -299,7 +352,7 @@ class Article extends Component
                         [
                             'urlPrincipal' => $articulo['urlPrincipal'],
                             'path' => $articulo['path'],
-                            'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
+                            'titulo' => $articulo['titulo'],
                             'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
                             'categoria' => $articulo['categoria'],
                             'autor' => $articulo['autor'],
@@ -383,5 +436,210 @@ class Article extends Component
         $response->headers->set('Content-Disposition', 'attachment; filename="articulos_' . $categoria . '.csv"');
 
         return $response;
+    }
+
+    public function guardarArticulosCategoria($diarios, $categorias)
+    {
+        if ($diarios) {
+            // $url = $diarios . 'category/' . $categorias;
+
+            if ($diarios === 'https://losandes.com.pe/') {
+                $url = $diarios . 'category/' . $categorias;
+            } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
+                $url = $diarios . '' . $categorias;
+            } else {
+                $url = $diarios . '' . $categorias;
+            }
+            // dd($url);
+            // Obtener el contenido HTML de la página
+            $html = $this->obtenerContenidoHTML($url);
+
+            if ($html !== false) {
+                // Extraer los datos
+                // $articulos = $this->extraerDatos($html);
+                $datosExtraidos = $this->extraerDatosCategoria($html);
+                $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+                // dd($datosExtraidos);
+                foreach ($articulos as $articulo) {
+                    ModelsArticle::updateOrCreate(
+                        [
+                            'url' => $articulo['url'],
+                        ],
+                        [
+                            'urlPrincipal' => $articulo['urlPrincipal'],
+                            'path' => $articulo['path'],
+                            'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
+                            'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
+                            'categoria' => $articulo['categoria'],
+                            'autor' => $articulo['autor'],
+                            'fecha' => $articulo['fecha'],
+                            'avatar' => $articulo['avatar'],
+                            'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
+                        ],
+                    );
+                }
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+
+    public function extraerDatosCategoria($html)
+    {
+        $crawler = new Crawler($html);
+
+        $articulos = $crawler->filter('.tdi_88, .tdb_module_loop, .td-category-pos-above, .sp-pcp-post-thumb-area, .extend-link--outside, .ListSection_list__section--item__zeP_z, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12');
+
+        $datosArticulos = [];
+
+        // Recorrer cada artículo y extraer el título, el extracto, la categoría y la imagen
+        $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
+            $titulo = $articulo->filter('.entry-title a, figcaption h1, .extend-link')->count() > 0 ? $articulo->filter('.entry-title a, figcaption h1, .extend-link')->text() : 'Sin título';
+            $extracto = $articulo->filter('.td-excerpt')->count() > 0 ? $articulo->filter('.td-excerpt')->text() : 'Sin extracto';
+            $categoria = $articulo->filter('.td-post-category')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
+
+            // Primero intenta con 'data-img-url', luego con 'src'
+            $imagen = 'Sin imagen';
+
+            // Verificar si existe un enlace con clase 'img' y atributo 'style' que contiene la imagen
+            if ($articulo->filter('a.img, .ws-post-first, .ws-post-sec')->count() > 0) {
+                $style = $articulo->filter('a.img, .ws-post-first, .ws-post-sec')->attr('style');
+                // Usar una expresión regular para extraer la URL dentro de 'background-image:url(...)'
+                preg_match('/background-image:url\((.*?)\)/', $style, $matches);
+
+                // Si se encuentra una coincidencia, el segundo elemento del array contiene la URL de la imagen
+                if (isset($matches[1])) {
+                    $imagen = $matches[1];
+                }
+            }
+
+            // Si no se encontró imagen en el 'style', intentar con los atributos 'data-img-url' o 'src'
+            if ($imagen === 'Sin imagen' && $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->count() > 0) {
+                // Intentar extraer primero el atributo 'data-img-url'
+                if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
+                    $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
+                }
+                // Si no existe 'data-img-url', intentar con 'src'
+                elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
+                    $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
+                }
+            }
+
+            $elementosFecha = $articulo->filter('.entry-date, .fmm-date span, span.ws-info span, div.post-date-bd span');
+
+            if ($elementosFecha->count() > 0) {
+                // Muestra los elementos encontrados
+                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
+
+                // Muestra el texto del primer elemento
+                $fecha = $elementosFecha->first()->text();
+            } elseif ($elementosFecha->count() > 0) {
+                // Muestra un mensaje si no se encuentran elementos
+                // dd('No se encontraron elementos con los selectores especificados.');
+                $fecha = $elementosFecha->text();
+            } else {
+                $fecha = 'Sin fecha';
+            }
+
+            $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+
+            if ($elementos->count() > 0) {
+                // Muestra los elementos encontrados
+                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
+
+                // Muestra el texto del primer elemento
+                $autor = $elementos->text();
+            } elseif ($elementos->count() > 0) {
+                // Muestra un mensaje si no se encuentran elementos
+                // dd('No se encontraron elementos con los selectores especificados.');
+                $autor = $elementos->first()->text();
+            } else {
+                $autor = 'Sin autor';
+            }
+
+            // Extraer el separador
+            $separador = $articulo->filter('.td-post-author-name span')->count() > 0 ? $articulo->filter('.td-post-author-name span')->text() : 'Sin separador';
+
+            // Extraer el avatar (imagen)
+            $avatar = $articulo->filter('.td-author-photo img')->count() > 0 ? $articulo->filter('.td-author-photo img')->attr('src') : 'Sin avatar';
+
+            // Extraer la URL del artículo
+            $urlCompleta = $articulo->filter('.entry-title a')->count() > 0 ? $articulo->filter('.entry-title a')->attr('href') : 'Sin URL';
+
+            $url = 'Sin URL';
+            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+            // Verificar si la URL del 'href' es relativa y completarla
+            if (strpos($href, 'http') === false) {
+                $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
+                $url = $baseUrl . $href;
+            } else {
+                $url = $href;
+            }
+
+            // Separar URL principal y el resto del path
+            if ($url !== 'Sin URL') {
+                // Extraer la parte principal de la URL
+                $urlPrincipal = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/';
+
+                if ($urlPrincipal === 'https://losandes.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario los Andes';
+                    }
+                } elseif ($urlPrincipal === 'https://diariosinfronteras.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario Sin Fronteras';
+                    }
+                } else {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        // dd('No se encontraron elementos con los selectores especificados.');
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario la República';
+                    }
+                }
+
+                // Extraer la parte restante (path)
+                $path = str_replace($urlPrincipal, '', $url);
+            }
+
+            $datosArticulos[] = [
+                'titulo' => $titulo,
+                'extracto' => $extracto,
+                'categoria' => $categoria,
+                'imagen' => $imagen,
+                'autor' => $autor,
+                'separador' => $separador,
+                'fecha' => $fecha,
+                'avatar' => $avatar,
+                'url' => $url,
+                'urlPrincipal' => $urlPrincipal,
+                'path' => $path,
+            ];
+        });
+
+        return [
+            'articulos' => $datosArticulos,
+        ];
     }
 }

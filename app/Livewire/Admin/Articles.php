@@ -11,6 +11,7 @@ use Usernotnull\Toast\Concerns\WireToast;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Articles extends Component
 {
@@ -29,8 +30,7 @@ class Articles extends Component
     {
         $articles = Article::query()
             ->where(function ($query) {
-                $query
-                    ->where('titulo', 'like', '%' . $this->search . '%');
+                $query->where('titulo', 'like', '%' . $this->search . '%');
             })
             ->latest('id')
             ->paginate(10);
@@ -118,7 +118,6 @@ class Articles extends Component
         // return $pdf->stream('reports/pdf_articles'); //abre en una pestaña como pdf
     }
 
-
     public function createExcel()
     {
         return Excel::download(new ArticlesExport(), 'reporte-de-articulos.xlsx');
@@ -126,7 +125,37 @@ class Articles extends Component
 
     public function createCSV()
     {
-        return Excel::download(new ArticlesExport(), 'reporte-de-articulos.csv', \Maatwebsite\Excel\Excel::CSV);
-    }
+        $articulos = Article::all();
 
+        // Crear el archivo CSV
+        $response = new StreamedResponse(function () use ($articulos) {
+            $handle = fopen('php://output', 'w');
+
+            // Enviar encabezado UTF-8 BOM
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            // Encabezados del CSV
+            fputcsv($handle, ['Título', 'Extracto', 'Categoría', 'Imagen', 'Autor', 'Fecha']);
+
+            foreach ($articulos as $articulo) {
+                // Convertir caracteres a UTF-8
+                $titulo = mb_convert_encoding($articulo->titulo, 'UTF-8', 'auto');
+                $extracto = mb_convert_encoding($articulo->extracto, 'UTF-8', 'auto');
+                $categoria = mb_convert_encoding($articulo->categoria, 'UTF-8', 'auto');
+                $imagen = mb_convert_encoding($articulo->imagen, 'UTF-8', 'auto');
+                $autor = mb_convert_encoding($articulo->autor, 'UTF-8', 'auto');
+                $fecha = mb_convert_encoding($articulo->fecha, 'UTF-8', 'auto');
+
+                fputcsv($handle, [$titulo, $extracto, $categoria, $imagen, $autor, $fecha]);
+            }
+
+            fclose($handle);
+        });
+
+        // Configurar el encabezado HTTP para descargar el archivo
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="reporte-de-articulos.csv"');
+
+        return $response;
+    }
 }
