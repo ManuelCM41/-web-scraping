@@ -35,10 +35,12 @@ class Article extends Component
         $articulos = ModelsArticle::orderBy('created_at', 'desc')
             ->paginate(16);
 
-        if ($this->search != null) {
-            $this->showModal;
+        if ($this->search != null || $this->diarioSelected != null || $this->categoriaSelected != null) {
             // Verifica si el usuario está autenticado
             if (!Auth::check()) {
+                $this->search = '';
+                $this->diarioSelected = '';
+                $this->categoriaSelected = '';
                 $this->openModal();
             }
         }
@@ -180,8 +182,7 @@ class Article extends Component
                 // Intentar extraer primero el atributo 'data-img-url'
                 if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
-                }
-                // Si no existe 'data-img-url', intentar con 'src'
+                } // Si no existe 'data-img-url', intentar con 'src'
                 elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
                 }
@@ -520,8 +521,7 @@ class Article extends Component
                 // Intentar extraer primero el atributo 'data-img-url'
                 if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
-                }
-                // Si no existe 'data-img-url', intentar con 'src'
+                } // Si no existe 'data-img-url', intentar con 'src'
                 elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
                 }

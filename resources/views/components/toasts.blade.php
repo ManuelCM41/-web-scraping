@@ -112,12 +112,12 @@
 
         <!-- Botones Log In y Register -->
         <div style="display: flex; justify-content: center; gap: 10px;">
-            <button style="padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
+            <a href="/login" style="padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; text-decoration: none; cursor: pointer;">
                 Log In
-            </button>
-            <button style="padding: 10px 20px; background-color: #28a745; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
+            </a>
+            <a href="/register" style="padding: 10px 20px; background-color: #28a745; color: #fff; border: none; border-radius: 5px; text-decoration: none; cursor: pointer;">
                 Register
-            </button>
+            </a>
         </div>
     </div>
 </div>

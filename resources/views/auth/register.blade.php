@@ -4,17 +4,41 @@
     <form method="POST" action="{{ route('register') }}">
         @csrf
         <div class="space-y-4">
-            <div>
-                <x-label for="name">{{ __('Full Name') }} <span class="text-red-500">*</span></x-label>
-                <x-input id="name" type="text" name="name" :value="old('name')" required autofocus
-                    autocomplete="name" />
+            <div class="flex justify-between gap-5">
+                <!-- Nombres -->
+                <div>
+                    <x-label for="name">{{ __('Full Name') }} <span class="text-red-500">*</span></x-label>
+                    <x-input id="name" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+                </div>
+
+                <!-- Apellidos -->
+                <div>
+                    <x-label for="surnames">{{ __('Surnames') }} <span class="text-red-500">*</span></x-label>
+                    <x-input id="surnames" type="text" name="surnames" :value="old('surnames')" required autocomplete="surnames" />
+                </div>
             </div>
 
+            <!-- Correo electrónico -->
             <div>
                 <x-label for="email">{{ __('Email Address') }} <span class="text-red-500">*</span></x-label>
                 <x-input id="email" type="email" name="email" :value="old('email')" required />
             </div>
 
+            <div class="flex justify-between gap-5">
+                <!-- DNI -->
+                <div>
+                    <x-label for="dni">{{ __('DNI') }} <span class="text-red-500">*</span></x-label>
+                    <x-input id="dni" type="text" name="dni" :value="old('dni')" required maxlength="8" />
+                </div>
+
+                <!-- Teléfono -->
+                <div>
+                    <x-label for="phone">{{ __('Phone') }} <span class="text-red-500">*</span></x-label>
+                    <x-input id="phone" type="text" name="phone" :value="old('phone')" required maxlength="9" />
+                </div>
+            </div>
+
+            <!-- Contraseña -->
             <div>
                 <x-label for="password" value="{{ __('Password') }}" />
                 <x-input id="password" type="password" name="password" required autocomplete="new-password" />
@@ -26,16 +50,11 @@
                     autocomplete="new-password" />
             </div>
         </div>
-        <div class="flex items-center justify-between mt-6">
-            <x-button>
-                {{ __('Sign Up') }}
-            </x-button>
-        </div>
         @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-            <div class="mt-6">
-                <label class="flex items-start">
-                    <input type="checkbox" class="form-checkbox mt-1" name="terms" id="terms" />
-                    <span class="text-sm ml-2">
+        <div class="mt-6">
+            <label class="flex items-start">
+                <input type="checkbox" class="form-checkbox mt-1" name="terms" id="terms" />
+                <span class="text-sm ml-2">
                         {!! __('I agree to the :terms_of_service and :privacy_policy', [
                             'terms_of_service' =>
                                 '<a target="_blank" href="' .
@@ -51,9 +70,14 @@
                                 '</a>',
                         ]) !!}
                     </span>
-                </label>
-            </div>
+            </label>
+        </div>
         @endif
+        <div class="flex items-center justify-between mt-6">
+            <x-button>
+                {{ __('Sign Up') }}
+            </x-button>
+        </div>
     </form>
     <x-validation-errors class="mt-4" />
     <!-- Footer -->
