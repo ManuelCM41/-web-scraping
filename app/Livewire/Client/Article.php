@@ -63,6 +63,11 @@ class Article extends Component
 
         if (Auth::check()) {
             $this->guardarArticulos($this->search);
+
+            $categories = Category::where('urlPrincipal', $this->search)->pluck('name');
+
+            $this->guardarArticulosCategoria($this->search, $categories);
+
             $articulos = ModelsArticle::where('url', 'like', '%' . $this->search . '%')
                 ->orderBy('created_at', 'desc')
                 ->paginate(16);
@@ -75,7 +80,6 @@ class Article extends Component
                     ->paginate(16);
                 if ($this->categoriaSelected) {
                     # code...
-                    $this->guardarArticulosCategoria($this->diarioSelected, $this->categoriaSelected);
                     $articulos = ModelsArticle::where('urlPrincipal', $this->diarioSelected)
                         ->where('categoria', $this->categoriaSelected)
                         ->orderBy('created_at', 'desc')
@@ -484,47 +488,54 @@ class Article extends Component
     public function guardarArticulosCategoria($diarios, $categorias)
     {
         if ($diarios) {
-            $diarioCategoria = Category::where('name', $categorias)->first();
-            // $url = $diarios . 'category/' . $categorias;
-            // dd($diarioCategoria->slug);
-            if ($diarios === 'https://losandes.com.pe/') {
-                $url = $diarios . 'category/' . $diarioCategoria->slug;
-                // dd($url);
-            } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
-                $url = $diarios . '' . $diarioCategoria->slug;
-            } else {
-                $url = $diarios . '' . $diarioCategoria->slug;
-            }
-            // dd($url);
-            // Obtener el contenido HTML de la página
-            $html = $this->obtenerContenidoHTML($url);
+            foreach ($categorias as $categoria) {
+                $diarioCategoria = Category::where('name', $categoria)->first();
+                // $url = $diarios . 'category/' . $categorias;
+                // dd($diarioCategoria->slug);
 
-            if ($html !== false) {
-                // Extraer los datos
-                // $articulos = $this->extraerDatos($html);
-                $datosExtraidos = $this->extraerDatosCategoria($html);
-                $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
-                // dd($articulos);
-                foreach ($articulos as $articulo) {
-                    ModelsArticle::updateOrCreate(
-                        [
-                            'url' => $articulo['url'],
-                        ],
-                        [
-                            'urlPrincipal' => $diarios,
-                            'path' => $articulo['path'],
-                            'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
-                            'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
-                            'categoria' => $diarioCategoria->name,
-                            'autor' => $articulo['autor'],
-                            'fecha' => $articulo['fecha'],
-                            'avatar' => $articulo['avatar'],
-                            'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
-                        ],
-                    );
+                if (!$diarioCategoria) {
+                    continue;
                 }
-            } else {
-                return;
+
+                if ($diarios === 'https://losandes.com.pe/') {
+                    $url = $diarios . 'category/' . $diarioCategoria->slug;
+                    // dd($url);
+                } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
+                    $url = $diarios . '' . $diarioCategoria->slug;
+                } else {
+                    $url = $diarios . '' . $diarioCategoria->slug;
+                }
+                // dd($url);
+                // Obtener el contenido HTML de la página
+                $html = $this->obtenerContenidoHTML($url);
+
+                if ($html !== false) {
+                    // Extraer los datos
+                    // $articulos = $this->extraerDatos($html);
+                    $datosExtraidos = $this->extraerDatosCategoria($html);
+                    $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+                    // dd($articulos);
+                    foreach ($articulos as $articulo) {
+                        ModelsArticle::updateOrCreate(
+                            [
+                                'url' => $articulo['url'],
+                            ],
+                            [
+                                'urlPrincipal' => $diarios,
+                                'path' => $articulo['path'],
+                                'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
+                                'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
+                                'categoria' => $diarioCategoria->name,
+                                'autor' => $articulo['autor'],
+                                'fecha' => $articulo['fecha'],
+                                'avatar' => $articulo['avatar'],
+                                'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
+                            ],
+                        );
+                    }
+                } else {
+                    return;
+                }
             }
         } else {
             return;

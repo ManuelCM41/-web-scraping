@@ -4,7 +4,6 @@ namespace App\Livewire\Admin;
 
 use App\Models\Article;
 use App\Models\Category;
-use App\Models\DataFeed;
 use App\Models\User;
 use Carbon\Carbon;
 use Livewire\Component;
@@ -16,6 +15,7 @@ class Dashboard extends Component
     public $articles1Today, $articles2Today, $articles3Today;
     public $articles1Yesterday, $articles2Yesterday, $articles3Yesterday;
     public $yearSelected, $monthSelected;
+    public $dataMes = [], $reviewSelected, $categorySelected;
     public $years, $meses;
 
     public function __construct()
@@ -58,6 +58,22 @@ class Dashboard extends Component
             })
             ->get();
 
+        $articlesByMonth = [];
+
+        // Consulta el total de artículos por mes
+        for ($month = 1; $month <= 12; $month++) {
+            $articlesByMonth[] = Article::whereMonth('created_at', $month)
+                ->when($this->reviewSelected, function ($query) {
+                    $query->where('urlPrincipal', $this->reviewSelected);
+                })
+                ->when($this->categorySelected, function ($query) {
+                    $query->where('categoria', $this->categorySelected);
+                })
+                ->count();
+        }
+
+        $this->dataMes = $articlesByMonth;
+
         $this->articles1Today = Article::whereDate('created_at', Carbon::today())->where('urlPrincipal', 'https://losandes.com.pe/')->get();
         $this->articles2Today = Article::whereDate('created_at', Carbon::today())->where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
         $this->articles3Today = Article::whereDate('created_at', Carbon::today())->where('urlPrincipal', 'https://larepublica.pe/')->get();
@@ -65,7 +81,6 @@ class Dashboard extends Component
         $this->articles1Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://losandes.com.pe/')->get();
         $this->articles2Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://diariosinfronteras.com.pe/')->get();
         $this->articles3Yesterday = Article::whereDate('created_at', Carbon::yesterday())->where('urlPrincipal', 'https://larepublica.pe/')->get();
-
 
         if ($this->yearSelected) {
             $this->dispatch('post-created', [
@@ -78,7 +93,8 @@ class Dashboard extends Component
                     $this->articles1Today->count(),
                     $this->articles2Today->count(),
                     $this->articles3Today->count()
-                ]
+                ],
+                'dataMonths' => $this->dataMes,
             ]);
         }
 

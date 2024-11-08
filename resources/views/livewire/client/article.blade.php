@@ -126,8 +126,14 @@
         <x-card>
             <div class="relative flex flex-col w-full h-full text-gray-700 gap-2">
                 <div class="flex flex-col justify-between gap-8 md:flex-row md:items-center">
-                    <div class="w-full md:w-72">
-                        <x-input-label wire:model.live="search" search label="Buscar" />
+                    <div class="flex items-center gap-2">
+                        <div class="w-full md:w-72">
+                            <x-input-label wire:model.live="search" search label="Buscar" />
+                        </div>
+
+                        <div wire:loading>
+                            <i class="fa-solid fa-spinner fa-spin fa-lg"></i>
+                        </div>
                     </div>
 
                     <x-toasts :showModal="$showModal" />

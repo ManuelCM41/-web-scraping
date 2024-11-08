@@ -84,7 +84,11 @@
                                     <div class="grow flex justify-between">
                                         <div class="self-center flex gap-1">
                                             En el diario <b>Los Andes</b> se escrapeo
-                                            <x-counter-animation>{{ $articles1Today->count() }}</x-counter-animation>
+                                            @if ($articles1Today->count() <= 2)
+                                                {{ $articles1Today->count() }}
+                                            @else
+                                                <x-counter-animation>{{ $articles1Today->count() }}</x-counter-animation>
+                                            @endif
                                             noticias en total
                                         </div>
                                         <div class="shrink-0 self-end ml-2">
@@ -105,7 +109,11 @@
                                     <div class="grow flex justify-between">
                                         <div class="self-center flex gap-1">
                                             En el diario <b>Sin Fronteras</b> se escrapeo
-                                            <x-counter-animation>{{ $articles2Today->count() }}</x-counter-animation>
+                                            @if ($articles2Today->count() <= 2)
+                                                {{ $articles2Today->count() }}
+                                            @else
+                                                <x-counter-animation>{{ $articles2Today->count() }}</x-counter-animation>
+                                            @endif
                                             noticias en total
                                         </div>
                                         <div class="shrink-0 self-end ml-2">
@@ -125,7 +133,11 @@
                                     <div class="grow flex justify-between">
                                         <div class="self-center flex gap-1">
                                             En el diario <b>La República</b> se escrapeo
-                                            <x-counter-animation>{{ $articles3Today->count() }}</x-counter-animation>
+                                            @if ($articles3Today->count() <= 2)
+                                                {{ $articles3Today->count() }}
+                                            @else
+                                                <x-counter-animation>{{ $articles3Today->count() }}</x-counter-animation>
+                                            @endif
                                             noticias en total
                                         </div>
                                         <div class="shrink-0 self-end ml-2">
@@ -223,25 +235,26 @@
             </x-card>
             <x-card>
                 <header class="pb-4 border-b border-gray-100 dark:border-gray-700/60">
-                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">Resumen de Noticias por meses
+                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">
+                        Resumen de Noticias por meses
                     </h2>
                 </header>
                 <div class="grid grid-cols-3 gap-3 mt-3">
-                    <x-select-label for="form.status" label="Revista" wire:model.live="form.status">
+                    <x-select-label for="form.status" label="Revista" wire:model.live="reviewSelected">
                         <option value="" selected>Todos</option>
                         <option value="https://losandes.com.pe/">Los Andes</option>
                         <option value="https://diariosinfronteras.com.pe/">Sin Fronteras</option>
                         <option value="https://larepublica.pe/">La Republica</option>
                     </x-select-label>
-                    <x-select-label for="form.status" label="Categoria" wire:model.live="form.status">
+                    <x-select-label for="form.status" label="Categoria" wire:model.live="categorySelected">
                         <option value="" selected>Todos</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}">
+                            <option value="{{ $category->name }}">
                                 {{ $category->name }}
                             </option>
                         @endforeach
                     </x-select-label>
-                    <x-select-label for="form.status" label="Año" wire:model.live="form.status">
+                    <x-select-label for="form.status" label="Año">
                         @foreach ($years as $year)
                             <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
                                 {{ $year }}</option>
@@ -325,24 +338,13 @@
             configpolarArea
         );
 
-        Livewire.on('post-created', event => {
-            // Actualizar los datos del gráfico
-            chartBar.data.datasets[0].data = event[0].dataAll;
-            chartBar.update();
-
-            polarArea.data.datasets[0].data = event[0].dataToday;
-            polarArea.update();
-        })
-    </script>
-
-    <script>
         const chartBarMonthsdata = {
             labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre",
                 "Noviembre", "Diciembre"
             ],
             datasets: [{
                 label: 'Total de Noticias',
-                data: [65, 59, 80, 81, 56, 55, 40, 65, 59, 80, 81, 56],
+                data: @json($dataMes),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(255, 159, 64, 0.2)',
@@ -371,10 +373,22 @@
             options: {},
         };
 
-        var chartBar = new Chart(
+        var chartBarMonths = new Chart(
             document.getElementById("chartBarMonths"),
             configchartBarMonths
         );
+
+        Livewire.on('post-created', event => {
+            // Actualizar los datos del gráfico
+            chartBar.data.datasets[0].data = event[0].dataAll;
+            chartBar.update();
+
+            polarArea.data.datasets[0].data = event[0].dataToday;
+            polarArea.update();
+
+            chartBarMonths.data.datasets[0].data = event[0].dataMonths;
+            chartBarMonths.update();
+        })
     </script>
 
 </div>
