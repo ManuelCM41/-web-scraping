@@ -79,7 +79,6 @@ class Article extends Component
                     ->orderBy('created_at', 'desc')
                     ->paginate(16);
                 if ($this->categoriaSelected) {
-                    # code...
                     $articulos = ModelsArticle::where('urlPrincipal', $this->diarioSelected)
                         ->where('categoria', $this->categoriaSelected)
                         ->orderBy('created_at', 'desc')
@@ -203,14 +202,10 @@ class Article extends Component
             $elementosFecha = $articulo->filter('.entry-date, .fmm-date span, span.ws-info span, div.post-date-bd span');
 
             if ($elementosFecha->count() > 0) {
-                // Muestra los elementos encontrados
-                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
-
                 // Muestra el texto del primer elemento
                 $fecha = $elementosFecha->first()->text();
             } elseif ($elementosFecha->count() > 0) {
                 // Muestra un mensaje si no se encuentran elementos
-                // dd('No se encontraron elementos con los selectores especificados.');
                 $fecha = $elementosFecha->text();
             } else {
                 $fecha = 'Sin fecha';
@@ -251,7 +246,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario los Andes';
@@ -262,7 +256,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario Sin Fronteras';
@@ -273,7 +266,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario la República';
@@ -301,7 +293,7 @@ class Article extends Component
 
         $categorias->each(function (Crawler $categoria) use (&$datosCategorias) {
             $titulo = $categoria->filter('div.tdb-menu-item-text, .Header_container-header_menu-secciones-link__gOmTh, span.menu-label')->count() > 0 ? $categoria->filter('div.tdb-menu-item-text, .Header_container-header_menu-secciones-link__gOmTh, span.menu-label')->text() : 'Sin título';
-            // $url = $categoria->filter('a')->count() > 0 ? $categoria->filter('a')->attr('href') : 'Sin URL';
+
             $slug = Str::slug($titulo);
 
             $url = 'Sin URL';
@@ -367,31 +359,29 @@ class Article extends Component
                     'url' => $url,
                     'user_id' => $user->id,
                 ]);
-                // dd($cantidadLimite);
-                // Incrementa la cantidad solo si aún no se ha alcanzado el límite
-                // $totalUrls = Scraping::where('url', $url)->count();
-                $totalUrls = Scraping::count();
-                if ($totalUrls < $cantidadLimiteUrl) {
-                    if ($scraping->cantidad < $cantidadLimite) {
-                        $scraping->cantidad = $scraping->cantidad + 1;
-                        $scraping->save();
-                    } else {
-                        $this->search = '';
-                        toast()->danger('Has alcanzado el límite de uso para tu plan.', 'Mensaje de Error')->push();
-                        return;
-                    }
+
+                // Si es una nueva URL y el total de URLs del usuario está dentro del límite
+                if (!$scraping->exists && Scraping::where('user_id', $user->id)->count() >= $cantidadLimiteUrl) {
+                    $this->search = '';
+                    toast()->danger('Has alcanzado el límite de URLs únicas para tu plan.', 'Mensaje de Error')->push();
+                    return;
+                }
+
+                // Incrementa la cantidad para la URL actual solo si no se ha alcanzado el límite de cantidad_veces
+                if ($scraping->cantidad < $cantidadLimite) {
+                    $scraping->cantidad += 1;
+                    $scraping->save();
                 } else {
                     $this->search = '';
-                    toast()->danger('Has alcanzado el límite de uso para tu plan.', 'Mensaje de Error')->push();
+                    toast()->danger('Has alcanzado el límite de uso para esta URL en tu plan.', 'Mensaje de Error')->push();
                     return;
                 }
 
                 // Extraer los datos
-                // $articulos = $this->extraerDatos($html);
                 $datosExtraidos = $this->extraerDatos($html);
                 $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
                 $categorias = $datosExtraidos['categorias']; // Acceder al array de categorías
-                // dd($categorias);
+
                 foreach ($articulos as $articulo) {
                     ModelsArticle::updateOrCreate(
                         [
@@ -500,15 +490,13 @@ class Article extends Component
         if ($diarios) {
             foreach ($categorias as $categoria) {
                 $diarioCategoria = Category::where('name', $categoria)->first();
-                // $url = $diarios . 'category/' . $categorias;
-                // dd($diarioCategoria->slug);
+
                 if (!$diarioCategoria) {
                     continue;
                 }
 
                 if ($diarios === 'https://losandes.com.pe/') {
                     $url = $diarios . 'category/' . $diarioCategoria->slug;
-                    // dd($url);
                 } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
                     $url = $diarios . '' . $diarioCategoria->slug;
                 } else {
@@ -518,16 +506,13 @@ class Article extends Component
                     // Combina el URL base con el slug modificado
                     $url = $diarios . $slug;
                 }
-                // dd($url, $diarioCategoria->name);
-                // Obtener el contenido HTML de la página
+
                 $html = $this->obtenerContenidoHTML($url);
 
                 if ($html !== false) {
-                    // Extraer los datos
-                    // $articulos = $this->extraerDatos($html);
                     $datosExtraidos = $this->extraerDatosCategoria($html);
                     $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
-                    // dd($articulos);
+
                     foreach ($articulos as $articulo) {
                         ModelsArticle::updateOrCreate(
                             [
@@ -601,14 +586,8 @@ class Article extends Component
             $elementosFecha = $articulo->filter('.entry-date, .fmm-date span, span.ws-info span, div.post-date-bd span');
 
             if ($elementosFecha->count() > 0) {
-                // Muestra los elementos encontrados
-                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
-
-                // Muestra el texto del primer elemento
                 $fecha = $elementosFecha->first()->text();
             } elseif ($elementosFecha->count() > 0) {
-                // Muestra un mensaje si no se encuentran elementos
-                // dd('No se encontraron elementos con los selectores especificados.');
                 $fecha = $elementosFecha->text();
             } else {
                 $fecha = 'Sin fecha';
@@ -617,14 +596,8 @@ class Article extends Component
             $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
 
             if ($elementos->count() > 0) {
-                // Muestra los elementos encontrados
-                // dd($elementos->html()); // Muestra el HTML de los elementos encontrados
-
-                // Muestra el texto del primer elemento
                 $autor = $elementos->text();
             } elseif ($elementos->count() > 0) {
-                // Muestra un mensaje si no se encuentran elementos
-                // dd('No se encontraron elementos con los selectores especificados.');
                 $autor = $elementos->first()->text();
             } else {
                 $autor = 'Sin autor';
@@ -636,11 +609,10 @@ class Article extends Component
             // Extraer el avatar (imagen)
             $avatar = $articulo->filter('.td-author-photo img')->count() > 0 ? $articulo->filter('.td-author-photo img')->attr('src') : 'Sin avatar';
 
-            // Extraer la URL del artículo
-            $urlCompleta = $articulo->filter('.entry-title a')->count() > 0 ? $articulo->filter('.entry-title a')->attr('href') : 'Sin URL';
-
             $url = 'Sin URL';
+
             $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+
             // Verificar si la URL del 'href' es relativa y completarla
             if (strpos($href, 'http') === false) {
                 $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
@@ -661,7 +633,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario los Andes';
@@ -672,7 +643,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario Sin Fronteras';
@@ -683,7 +653,6 @@ class Article extends Component
                         $autor = $elementos->text();
                     } elseif ($elementos->count() > 0) {
                         // Muestra un mensaje si no se encuentran elementos
-                        // dd('No se encontraron elementos con los selectores especificados.');
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario la República';
