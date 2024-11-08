@@ -15,12 +15,13 @@ class Dashboard extends Component
     public $articles1Today, $articles2Today, $articles3Today;
     public $articles1Yesterday, $articles2Yesterday, $articles3Yesterday;
     public $yearSelected, $monthSelected;
-    public $dataMes = [], $reviewSelected, $categorySelected;
+    public $dataMes = [], $reviewSelected, $categorySelected, $yearMonths;
     public $years, $meses;
 
     public function __construct()
     {
         $this->yearSelected = date('Y');
+        $this->yearMonths = date('Y');
     }
 
     public function render()
@@ -68,6 +69,9 @@ class Dashboard extends Component
                 })
                 ->when($this->categorySelected, function ($query) {
                     $query->where('categoria', $this->categorySelected);
+                })
+                ->when($this->yearMonths, function ($query) {
+                    $query->whereYear('created_at', $this->yearMonths);
                 })
                 ->count();
         }

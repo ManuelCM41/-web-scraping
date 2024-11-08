@@ -5,8 +5,10 @@ namespace App\Livewire\Client;
 use App\Models\Article;
 use Livewire\Component;
 use App\Models\ArticleDetail as ModelsArticleDetail;
+use App\Models\Category;
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
+use Illuminate\Support\Str;
 
 class ArticleDetail extends Component
 {
@@ -222,6 +224,25 @@ class ArticleDetail extends Component
                                 ],
                                 $parrafoCampos, // Agregar los párrafos como parte de los campos de actualización
                             ),
+                        );
+
+                        if ($imagenArticle->urlPrincipal === 'https://losandes.com.pe/') {
+                            $category = 'category/';
+                        } elseif ($imagenArticle->urlPrincipal === 'https://diariosinfronteras.com.pe/') {
+                            $category = '';
+                        }
+                        
+                        $categoria = Str::slug($articuloCompleto['categoria']);
+
+                        Category::updateOrCreate(
+                            [
+                                'name' => $articuloCompleto['categoria'],
+                            ],
+                            [
+                                'urlPrincipal' => $imagenArticle->urlPrincipal,
+                                'url' => $imagenArticle->urlPrincipal.''.$category.''.$categoria,
+                                'slug' => $categoria,
+                            ],
                         );
                     }
                 }

@@ -254,7 +254,7 @@
                             </option>
                         @endforeach
                     </x-select-label>
-                    <x-select-label for="form.status" label="Año">
+                    <x-select-label for="form.status" label="Año" wire:model.live="yearMonths">
                         @foreach ($years as $year)
                             <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
                                 {{ $year }}</option>

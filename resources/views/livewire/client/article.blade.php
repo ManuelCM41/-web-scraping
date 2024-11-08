@@ -101,7 +101,10 @@
             </a>
 
             @if (Route::has('login'))
-                <nav class="-mx-3 flex flex-1 justify-end gap-3">
+                <nav class="-mx-3 flex flex-1 justify-end gap-3 items-center">
+                    <a href="#">
+                        <span class="text-md">Planes</span>
+                    </a>
                     @auth
                         <a href="{{ route('admin.home') }}"
                             class="rounded-lg px-4 py-2 text-white font-semibold transition duration-300 ease-in-out transform bg-gradient-to-r from-[#FF2D20] to-[#FF6A3D] shadow-lg hover:shadow-xl hover:from-[#FF6A3D] hover:to-[#FF2D20] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF2D20]">
