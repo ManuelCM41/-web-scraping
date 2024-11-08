@@ -14,7 +14,7 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/tall-toasts.js'])
 
     <link rel="stylesheet" href="/css/styles.css">
     <!-- Styles -->
@@ -40,6 +40,7 @@
     :class="{ 'sidebar-expanded': sidebarExpanded }" x-data="{ sidebarOpen: false, sidebarExpanded: localStorage.getItem('sidebar-expanded') == 'true' }" x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebar-expanded', value))">
 
     <livewire:toasts />
+    @livewire('toasts')
 
     <script>
         if (localStorage.getItem('sidebar-expanded') == 'true') {
@@ -50,7 +51,6 @@
     </script>
 
     <div>
-
         @php
             $route = Route::getRoutes()->getByAction(request()->route()->getActionName());
         @endphp

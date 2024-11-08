@@ -30,6 +30,4 @@ Route::prefix('admin')->middleware([
     Route::get('/tabla/productos', Dashboard::class)->middleware('can:admin.products')->name('admin.products');
     Route::get('/tabla/articulos', Articles::class)->middleware('can:admin.articles')->name('admin.articles');
     Route::get('/tabla/articulo-detalle', Dashboard::class)->middleware('can:admin.articles-details')->name('admin.articles-details');
-
-
 });

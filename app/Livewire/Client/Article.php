@@ -11,10 +11,12 @@ use Livewire\WithPagination;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Str;
+use Usernotnull\Toast\Concerns\WireToast;
 
 class Article extends Component
 {
     use WithPagination;
+    use WireToast;
 
     public $search;
     public $category;
@@ -25,6 +27,11 @@ class Article extends Component
 
     protected $listeners = ['render', 'delete', 'openModal', 'closeModal'];
 
+    public function refreshArticle()
+    {
+        $this->render();
+    }
+
     public function openModal()
     {
         $this->showModal = true;
@@ -32,8 +39,7 @@ class Article extends Component
 
     public function render()
     {
-        $articulos = ModelsArticle::orderBy('created_at', 'desc')
-            ->paginate(16);
+        $articulos = ModelsArticle::orderBy('created_at', 'desc')->paginate(16);
 
         if ($this->search != null || $this->diarioSelected != null || $this->categoriaSelected != null) {
             // Verifica si el usuario está autenticado
@@ -182,7 +188,8 @@ class Article extends Component
                 // Intentar extraer primero el atributo 'data-img-url'
                 if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
-                } // Si no existe 'data-img-url', intentar con 'src'
+                }
+                // Si no existe 'data-img-url', intentar con 'src'
                 elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
                 }
@@ -216,6 +223,8 @@ class Article extends Component
             // Extraer la parte específica de la URL
             $url = 'Sin URL';
             $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+
+            $href = ltrim($href, '/');
 
             // Verificar si la URL del 'href' es relativa y completarla
             if (strpos($href, 'http') === false) {
@@ -292,6 +301,8 @@ class Article extends Component
 
             $url = 'Sin URL';
             $href = $categoria->filter('a')->attr('href');
+            // Quitar el '/' inicial si está presente
+            $href = ltrim($href, '/');
             // Verificar si la URL del 'href' es relativa y completarla
             if (strpos($href, 'http') === false) {
                 $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
@@ -334,6 +345,7 @@ class Article extends Component
     {
         if ($datosArticulos) {
             $url = $datosArticulos;
+            // dd($url);
 
             // Obtener el contenido HTML de la página
             $html = $this->obtenerContenidoHTML($url);
@@ -344,14 +356,14 @@ class Article extends Component
                 $datosExtraidos = $this->extraerDatos($html);
                 $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
                 $categorias = $datosExtraidos['categorias']; // Acceder al array de categorías
-                // dd($datosExtraidos);
+                // dd($categorias);
                 foreach ($articulos as $articulo) {
                     ModelsArticle::updateOrCreate(
                         [
                             'url' => $articulo['url'],
                         ],
                         [
-                            'urlPrincipal' => $articulo['urlPrincipal'],
+                            'urlPrincipal' => $datosArticulos,
                             'path' => $articulo['path'],
                             'titulo' => $articulo['titulo'],
                             'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
@@ -390,66 +402,77 @@ class Article extends Component
         }
     }
 
-    public function descargarCSV($categoria)
+    public function descargarCSV()
     {
-        // Llama a las funciones existentes para obtener el contenido HTML y extraer los datos
-        $url = 'https://losandes.com.pe/category/' . $categoria;
-        $html = $this->obtenerContenidoHTML($url);
+        if (!Auth::check()) {
+            $this->search = '';
+            $this->diarioSelected = '';
+            $this->categoriaSelected = '';
+            $this->openModal();
+        } else {
+            if ($this->diarioSelected != null && $this->categoriaSelected != null) {
+                $articulos = ModelsArticle::where('urlPrincipal', $this->diarioSelected)
+                    ->where('categoria', $this->categoriaSelected)
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(16);
 
-        if ($html === false) {
-            return response()->json(['error' => 'No se pudieron cargar los datos.'], 500);
-        }
+                // Crear el archivo CSV
+                $response = new StreamedResponse(function () use ($articulos) {
+                    $handle = fopen('php://output', 'w');
 
-        $articulos = $this->extraerDatos($html);
+                    // Enviar encabezado UTF-8 BOM
+                    fwrite($handle, "\xEF\xBB\xBF");
 
-        // Filtrar los artículos según la categoría seleccionada
-        $articulosFiltrados = array_filter($articulos, function ($articulo) use ($categoria) {
-            return strtolower($this->reemplazarGuionPorEspacio($articulo['categoria'])) === strtolower($categoria);
-        });
+                    // Encabezados del CSV
+                    fputcsv($handle, ['Título', 'Extracto', 'Categoría', 'Imagen', 'Autor', 'Fecha']);
 
-        // Crear el archivo CSV
-        $response = new StreamedResponse(function () use ($articulosFiltrados) {
-            $handle = fopen('php://output', 'w');
+                    foreach ($articulos as $articulo) {
+                        // Convertir caracteres a UTF-8
+                        $titulo = mb_convert_encoding($articulo['titulo'], 'UTF-8', 'auto');
+                        $extracto = mb_convert_encoding($articulo['extracto'], 'UTF-8', 'auto');
+                        $categoria = mb_convert_encoding($articulo['categoria'], 'UTF-8', 'auto');
+                        $imagen = mb_convert_encoding($articulo['imagen'], 'UTF-8', 'auto');
+                        $autor = mb_convert_encoding($articulo['autor'], 'UTF-8', 'auto');
+                        $fecha = mb_convert_encoding($articulo['fecha'], 'UTF-8', 'auto');
 
-            // Enviar encabezado UTF-8 BOM
-            fwrite($handle, "\xEF\xBB\xBF");
+                        fputcsv($handle, [$titulo, $extracto, $categoria, $imagen, $autor, $fecha]);
+                    }
 
-            // Encabezados del CSV
-            fputcsv($handle, ['Título', 'Extracto', 'Categoría', 'Imagen', 'Autor', 'Fecha']);
+                    fclose($handle);
+                });
 
-            foreach ($articulosFiltrados as $articulo) {
-                // Convertir caracteres a UTF-8
-                $titulo = mb_convert_encoding($articulo['titulo'], 'UTF-8', 'auto');
-                $extracto = mb_convert_encoding($articulo['extracto'], 'UTF-8', 'auto');
-                $categoria = mb_convert_encoding($articulo['categoria'], 'UTF-8', 'auto');
-                $imagen = mb_convert_encoding($articulo['imagen'], 'UTF-8', 'auto');
-                $autor = mb_convert_encoding($articulo['autor'], 'UTF-8', 'auto');
-                $fecha = mb_convert_encoding($articulo['fecha'], 'UTF-8', 'auto');
+                // Configurar el encabezado HTTP para descargar el archivo
+                $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+                $response->headers->set('Content-Disposition', 'attachment; filename="articulos_' . $this->categoriaSelected . '.csv"');
 
-                fputcsv($handle, [$titulo, $extracto, $categoria, $imagen, $autor, $fecha]);
+                toast()->success('Archivo descargado correctamente', 'Mensaje de éxito')->push();
+
+                return $response;
+            } else {
+                if ($this->diarioSelected) {
+                    toast()->warning('Selecciona la Categoría', 'Mensaje de Advertencia')->push();
+                } elseif ($this->categoriaSelected) {
+                    toast()->warning('Selecciona el Diario', 'Mensaje de Advertencia')->push();
+                } else {
+                    toast()->warning('Selecciona el Diario y la Categoría', 'Mensaje de Advertencia')->push();
+                }
             }
-
-            fclose($handle);
-        });
-
-        // Configurar el encabezado HTTP para descargar el archivo
-        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
-        $response->headers->set('Content-Disposition', 'attachment; filename="articulos_' . $categoria . '.csv"');
-
-        return $response;
+        }
     }
 
     public function guardarArticulosCategoria($diarios, $categorias)
     {
         if ($diarios) {
+            $diarioCategoria = Category::where('name', $categorias)->first();
             // $url = $diarios . 'category/' . $categorias;
-
+            // dd($diarioCategoria->slug);
             if ($diarios === 'https://losandes.com.pe/') {
-                $url = $diarios . 'category/' . $categorias;
+                $url = $diarios . 'category/' . $diarioCategoria->slug;
+                // dd($url);
             } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
-                $url = $diarios . '' . $categorias;
+                $url = $diarios . '' . $diarioCategoria->slug;
             } else {
-                $url = $diarios . '' . $categorias;
+                $url = $diarios . '' . $diarioCategoria->slug;
             }
             // dd($url);
             // Obtener el contenido HTML de la página
@@ -460,18 +483,18 @@ class Article extends Component
                 // $articulos = $this->extraerDatos($html);
                 $datosExtraidos = $this->extraerDatosCategoria($html);
                 $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
-                // dd($datosExtraidos);
+                // dd($articulos);
                 foreach ($articulos as $articulo) {
                     ModelsArticle::updateOrCreate(
                         [
                             'url' => $articulo['url'],
                         ],
                         [
-                            'urlPrincipal' => $articulo['urlPrincipal'],
+                            'urlPrincipal' => $diarios,
                             'path' => $articulo['path'],
                             'titulo' => $articulo['titulo'], // Condición para buscar el artículo existente
                             'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
-                            'categoria' => $articulo['categoria'],
+                            'categoria' => $diarioCategoria->name,
                             'autor' => $articulo['autor'],
                             'fecha' => $articulo['fecha'],
                             'avatar' => $articulo['avatar'],
@@ -499,7 +522,7 @@ class Article extends Component
         $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
             $titulo = $articulo->filter('.entry-title a, figcaption h1, .extend-link')->count() > 0 ? $articulo->filter('.entry-title a, figcaption h1, .extend-link')->text() : 'Sin título';
             $extracto = $articulo->filter('.td-excerpt')->count() > 0 ? $articulo->filter('.td-excerpt')->text() : 'Sin extracto';
-            $categoria = $articulo->filter('.td-post-category')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
+            $categoria = $articulo->filter('.td-post-category .post-cats-bd .fmm-cats')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
 
             // Primero intenta con 'data-img-url', luego con 'src'
             $imagen = 'Sin imagen';
@@ -521,7 +544,8 @@ class Article extends Component
                 // Intentar extraer primero el atributo 'data-img-url'
                 if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
-                } // Si no existe 'data-img-url', intentar con 'src'
+                }
+                // Si no existe 'data-img-url', intentar con 'src'
                 elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
                     $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
                 }

@@ -169,7 +169,7 @@ class ArticleDetail extends Component
     {
         if ($datosArticulos) {
             $url = $datosArticulos;
-
+            // dd($url);
             // Obtener el contenido HTML de la página
             $html = $this->obtenerContenidoHTML($url);
 
@@ -192,12 +192,15 @@ class ArticleDetail extends Component
                     $parrafos = $articuloCompleto['contenido'];
                     $imagenArticle = Article::where('url', $datosArticulos)->first();
 
+                    // dd($articuloCompleto);
+
                     if ($articuloCompleto['categoria'] != 'Sin categoria') {
                         $imagenArticle->titulo = $articuloCompleto['titulo'];
                         $imagenArticle->categoria = $articuloCompleto['categoria'];
                         $imagenArticle->fecha = $articuloCompleto['fecha'];
                         $imagenArticle->save();
 
+                        // dd($imagenArticle);
                         // Definir los campos de la base de datos para los párrafos
                         $parrafoCampos = [];
                         for ($i = 0; $i < count($parrafos); $i++) {
