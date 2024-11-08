@@ -47,10 +47,10 @@ class RoleSeeder extends Seeder
         Permission::create(['name' => 'admin.products.edit', 'section' => 'Productos', 'description' => 'Editar productos'])->syncRoles([$role1, $role2]);
         Permission::create(['name' => 'admin.products.delete', 'section' => 'Productos', 'description' => 'Eliminar productos'])->syncRoles([$role1]);
 
-        Permission::create(['name' => 'admin.articles', 'section' => 'Articulos', 'description' => 'Ver listado de articulos'])->syncRoles([$role1, $role2, $role3]);
-        Permission::create(['name' => 'admin.articles.show', 'section' => 'Articulos', 'description' => 'Ver detalle de articulos'])->syncRoles([$role1, $role2, $role3]);
-        Permission::create(['name' => 'admin.articles.create', 'section' => 'Articulos', 'description' => 'Crear articulos'])->syncRoles([$role1, $role2]);
-        Permission::create(['name' => 'admin.articles.edit', 'section' => 'Articulos', 'description' => 'Editar articulos'])->syncRoles([$role1, $role2]);
-        Permission::create(['name' => 'admin.articles.delete', 'section' => 'Articulos', 'description' => 'Eliminar articulos'])->syncRoles([$role1]);
+        Permission::create(['name' => 'admin.articles', 'section' => 'Articulos', 'description' => 'Ver listado de articulos'])->syncRoles([$role1, $role2, $role3, $role4]);
+        Permission::create(['name' => 'admin.articles.show', 'section' => 'Articulos', 'description' => 'Ver detalle de articulos'])->syncRoles([$role1, $role2, $role3, $role4]);
+        Permission::create(['name' => 'admin.articles.create', 'section' => 'Articulos', 'description' => 'Crear articulos'])->syncRoles([$role1, $role2, $role4]);
+        Permission::create(['name' => 'admin.articles.edit', 'section' => 'Articulos', 'description' => 'Editar articulos'])->syncRoles([$role1, $role2, $role4]);
+        Permission::create(['name' => 'admin.articles.delete', 'section' => 'Articulos', 'description' => 'Eliminar articulos'])->syncRoles([$role1, $role4]);
     }
 }

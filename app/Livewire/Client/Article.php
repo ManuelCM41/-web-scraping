@@ -4,6 +4,7 @@ namespace App\Livewire\Client;
 
 use App\Models\Article as ModelsArticle;
 use App\Models\Category;
+use App\Models\Scraping;
 use Livewire\Component;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
@@ -351,6 +352,26 @@ class Article extends Component
             $html = $this->obtenerContenidoHTML($url);
 
             if ($html !== false) {
+                $user = Auth::user();
+
+                // Obtiene el límite de `cantidad_veces` desde la membresía del usuario
+                $cantidadLimite = $user->membership->cantidad_veces;
+
+                // Busca o crea el registro en la tabla `Scraping`
+                $scraping = Scraping::firstOrNew([
+                    'url' => $url,
+                    'user_id' => $user->id,
+                ]);
+                // dd($cantidadLimite);
+                // Incrementa la cantidad solo si aún no se ha alcanzado el límite
+                if ($scraping->cantidad < $cantidadLimite) {
+                    $scraping->cantidad = $scraping->cantidad + 1;
+                    $scraping->save();
+                } else {
+                    $this->search = '';
+                    toast()->danger('Has alcanzado el límite de uso para tu plan.', 'Mensaje de Error')->push();
+                }
+
                 // Extraer los datos
                 // $articulos = $this->extraerDatos($html);
                 $datosExtraidos = $this->extraerDatos($html);

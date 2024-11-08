@@ -69,4 +69,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function membership()
+    {
+        return $this->belongsTo(Membership::class);
+    }
+
+    public function scrapings()
+    {
+        return $this->hasMany(Scraping::class);
+    }
 }
