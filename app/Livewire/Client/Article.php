@@ -399,7 +399,7 @@ class Article extends Component
 
                 foreach ($categorias as $categoria) {
                     if ($categoria['titulo'] != 'Sin título') {
-                        if ($categoria['titulo'] == 'INICIO' || $categoria['titulo'] == 'SUSCRÍBETE') {
+                        if ($categoria['titulo'] == 'INICIO' || $categoria['titulo'] == 'SUSCRÍBETE' || $categoria['titulo'] == 'PERÚ' || $categoria['titulo'] == 'NEWSLETTERS') {
                             // No hacer nada si el título es "INICIO" o "SUSCRÍBETE"
                         } else {
                             Category::updateOrCreate(
@@ -495,7 +495,7 @@ class Article extends Component
             } else {
                 $url = $diarios . '' . $diarioCategoria->slug;
             }
-            // dd($url);
+            // dd($url, $diarioCategoria->name);
             // Obtener el contenido HTML de la página
             $html = $this->obtenerContenidoHTML($url);
 
