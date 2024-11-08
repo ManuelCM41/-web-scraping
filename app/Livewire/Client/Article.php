@@ -358,22 +358,32 @@ class Article extends Component
             if ($html !== false) {
                 $user = Auth::user();
 
-                // Obtiene el límite de `cantidad_veces` desde la membresía del usuario
+                // Obtiene el límite de cantidad_veces desde la membresía del usuario
                 $cantidadLimite = $user->membership->cantidad_veces;
+                $cantidadLimiteUrl = $user->membership->cantidad_urls;
 
-                // Busca o crea el registro en la tabla `Scraping`
+                // Busca o crea el registro en la tabla Scraping
                 $scraping = Scraping::firstOrNew([
                     'url' => $url,
                     'user_id' => $user->id,
                 ]);
                 // dd($cantidadLimite);
                 // Incrementa la cantidad solo si aún no se ha alcanzado el límite
-                if ($scraping->cantidad < $cantidadLimite) {
-                    $scraping->cantidad = $scraping->cantidad + 1;
-                    $scraping->save();
+                // $totalUrls = Scraping::where('url', $url)->count();
+                $totalUrls = Scraping::count();
+                if ($totalUrls < $cantidadLimiteUrl) {
+                    if ($scraping->cantidad < $cantidadLimite) {
+                        $scraping->cantidad = $scraping->cantidad + 1;
+                        $scraping->save();
+                    } else {
+                        $this->search = '';
+                        toast()->danger('Has alcanzado el límite de uso para tu plan.', 'Mensaje de Error')->push();
+                        return;
+                    }
                 } else {
                     $this->search = '';
                     toast()->danger('Has alcanzado el límite de uso para tu plan.', 'Mensaje de Error')->push();
+                    return;
                 }
 
                 // Extraer los datos
@@ -489,16 +499,24 @@ class Article extends Component
     {
         if ($diarios) {
             foreach ($categorias as $categoria) {
-                $diarioCategoria = Category::where('name', $categorias)->first();
+                $diarioCategoria = Category::where('name', $categoria)->first();
                 // $url = $diarios . 'category/' . $categorias;
                 // dd($diarioCategoria->slug);
+                if (!$diarioCategoria) {
+                    continue;
+                }
+
                 if ($diarios === 'https://losandes.com.pe/') {
                     $url = $diarios . 'category/' . $diarioCategoria->slug;
                     // dd($url);
                 } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
                     $url = $diarios . '' . $diarioCategoria->slug;
                 } else {
-                    $url = $diarios . '' . $diarioCategoria->slug;
+                    // Obtén el slug de la categoría y reemplaza 'y' con un guion
+                    $slug = str_replace('-y-', '-', $diarioCategoria->slug);
+
+                    // Combina el URL base con el slug modificado
+                    $url = $diarios . $slug;
                 }
                 // dd($url, $diarioCategoria->name);
                 // Obtener el contenido HTML de la página
@@ -532,6 +550,8 @@ class Article extends Component
                     return;
                 }
             }
+            toast()->success('Se escrapeó correctamente.', 'Mensaje de Éxito')->push();
+            $this->search = '';
         } else {
             return;
         }

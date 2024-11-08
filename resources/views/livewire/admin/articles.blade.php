@@ -93,7 +93,12 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="p-3">{{ $article->url }}</td>
+                                <td class="p-3">
+                                    <a href="{{ $article->url }}" target="_blank" class="hover:text-blue-700">
+                                        Link
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                </td>
                                 <td class="p-3">{{ $article->extracto }}</td>
                                 <td class="p-3">{{ $article->categoria }}</td>
                                 <td class="p-3">{{ $article->autor }}</td>
