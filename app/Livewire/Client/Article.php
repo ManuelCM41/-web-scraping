@@ -93,54 +93,18 @@ class Article extends Component
         return view('livewire.client.article', compact('articulos'));
     }
 
-    public function normalizarTexto($texto)
-    {
-        $transliteraciones = [
-            'á' => 'a',
-            'é' => 'e',
-            'í' => 'i',
-            'ó' => 'o',
-            'ú' => 'u',
-            'ü' => 'u',
-            'Á' => 'A',
-            'É' => 'E',
-            'Í' => 'I',
-            'Ó' => 'O',
-            'Ú' => 'U',
-            'Ü' => 'U',
-            'ñ' => 'n',
-            'Ñ' => 'N',
-        ];
-
-        // Reemplazar los caracteres especiales
-        $texto = strtr($texto, $transliteraciones);
-
-        // Reemplazar comillas curvadas y otros caracteres no deseados
-        $texto = str_replace(['“', '”', '‘', '’'], '', $texto);
-
-        // Eliminar signos de interrogación, exclamación y otros caracteres no deseados
-        $texto = str_replace(['?', '!', '¡', '¿'], '', $texto);
-
-        return $texto;
-    }
-
-    public function cargarArticulos($categoria)
-    {
-        $this->category = $categoria;
-    }
-
     public function obtenerContenidoHTML($url)
     {
         $client = new Client();
 
         try {
             $options = [
-                'connect_timeout' => 5,
-                'timeout' => 5,
+                'connect_timeout' => 100,
+                'timeout' => 100,
                 'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
                 ],
-                'verify' => false, // Desactivar verificación SSL si es necesario
+                    'verify' => false, // Desactivar verificación SSL si es necesario
             ];
 
             $response = $client->request('GET', $url, $options);
@@ -151,16 +115,30 @@ class Article extends Component
                 return false;
             }
         } catch (\Exception $e) {
+            // dd('Error al obtener contenido HTML: ' . $e->getMessage());
             return false;
         }
     }
 
-    public function extraerDatos($html)
+    public function extraerDatos($html, $link)
     {
         $crawler = new Crawler($html);
 
-        // Seleccionar todos los artículos por el selector CSS de clase
-        $articulos = $crawler->filter('.tdi_88, .td-category-pos-above, .sp-pcp-post-thumb-area, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12');
+        if ($link === 'https://larepublica.pe/') {
+            $articulos = $crawler->filter(
+                'div.wrapper__content.mh-600 .MainSpotlight_primary__other__PEhAc,
+            div.wrapper__content.mh-600 .MainSpotlight_secondarySpotlight__item__UWjdv,
+            div.wrapper__content.mh-600 .MainSpotlight_lateral__item__PuIEF,
+            div.wrapper__content.mh-600 .ItemSection_itemSection__D8r12'
+            );
+        } elseif ($link === 'https://losandes.com.pe/') {
+            $articulos = $crawler->filter('div.tdc_zone.tdi_80 .sp-pcp-post-thumb-area, div.tdc_zone.tdi_80 .td-category-pos-above');
+        } elseif ($link === 'https://diariosinfronteras.com.pe/') {
+            $articulos = $crawler->filter('div#featured-main.featured-main .fm-story, div#main.main div.post');
+        } elseif ($link === 'https://www.expreso.com.pe/') {
+            $articulos = $crawler->filter('div.uk-home-body div.uk-inline, div.uk-home-body div.uk-card.uk-card-simple, div.uk-home-body div.uk-cover-container');
+        }
+
         $categorias = $crawler->filter('.menu-item-object-category, .Header_container-header_menu-secciones-item__3sngP, .bd_menu_item');
 
         $datosArticulos = [];
@@ -168,7 +146,7 @@ class Article extends Component
 
         // Recorrer cada artículo y extraer el título, el extracto, la categoría y la imagen
         $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
-            $titulo = $articulo->filter('.entry-title a, figcaption h1, .extend-link')->count() > 0 ? $articulo->filter('.entry-title a, figcaption h1, .extend-link')->text() : 'Sin título';
+            $titulo = $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title')->count() > 0 ? $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title')->text() : 'Sin título';
             $extracto = $articulo->filter('.td-excerpt')->count() > 0 ? $articulo->filter('.td-excerpt')->text() : 'Sin extracto';
             $categoria = $articulo->filter('.td-post-category')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
 
@@ -176,8 +154,8 @@ class Article extends Component
             $imagen = 'Sin imagen';
 
             // Verificar si existe un enlace con clase 'img' y atributo 'style' que contiene la imagen
-            if ($articulo->filter('a.img, .ws-post-first, .ws-post-sec')->count() > 0) {
-                $style = $articulo->filter('a.img, .ws-post-first, .ws-post-sec')->attr('style');
+            if ($articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->count() > 0) {
+                $style = $articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->attr('style');
                 // Usar una expresión regular para extraer la URL dentro de 'background-image:url(...)'
                 preg_match('/background-image:url\((.*?)\)/', $style, $matches);
 
@@ -222,22 +200,42 @@ class Article extends Component
 
             // Extraer la parte específica de la URL
             $url = 'Sin URL';
-            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link, a.uk-link-reset')->attr('href');
 
-            $href = ltrim($href, '/');
-
-            // Verificar si la URL del 'href' es relativa y completarla
-            if (strpos($href, 'http') === false) {
-                $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
-                $url = $baseUrl . $href;
+            // Condicional para verificar si el URL tiene un esquema (http/https) y un dominio
+            if (filter_var($href, FILTER_VALIDATE_URL)) {
+                // Si el URL es válido, lo dejamos tal cual está
+                $hrefPrincipal = $href;
             } else {
-                $url = $href;
+                $this->search = rtrim($this->search, '/');
+
+                // Luego concatenamos el href
+                $hrefPrincipal = $this->search . $href;
             }
 
             // Separar URL principal y el resto del path
-            if ($url !== 'Sin URL') {
+            if ($href !== 'Sin URL') {
                 // Extraer la parte principal de la URL
-                $urlPrincipal = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/';
+                $scheme = parse_url($href, PHP_URL_SCHEME);
+                $host = parse_url($href, PHP_URL_HOST);
+
+                // Condicional para construir el URL principal o usar solo el path si falta el dominio
+                if ($scheme && $host) {
+                    // Si ambos están presentes, construimos la URL principal
+                    $urlPrincipal = $scheme . '://' . $host . '/';
+                } else {
+                    // Si faltan, asumimos que es una ruta relativa y no asignamos un dominio
+                    $urlPrincipal = $this->search;
+                }
+
+                // Extraer el path de la URL
+                $pathPri = parse_url($href, PHP_URL_PATH);
+                // Si el path es válido, quitar las barras iniciales
+                if ($pathPri !== null) {
+                    $pathSinBarras = preg_replace('#^/+#', '', $pathPri);
+                } else {
+                    $pathSinBarras = preg_replace('#^/+#', '', $pathPri);
+                }
 
                 if ($urlPrincipal === 'https://losandes.com.pe/') {
                     $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
@@ -260,6 +258,16 @@ class Article extends Component
                     } else {
                         $autor = 'Diario Sin Fronteras';
                     }
+                } elseif ($urlPrincipal === 'https://www.expreso.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario Expreso';
+                    }
                 } else {
                     $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
                     if ($elementos->count() > 0) {
@@ -271,9 +279,6 @@ class Article extends Component
                         $autor = 'Diario la República';
                     }
                 }
-
-                // Extraer la parte restante (path)
-                $path = str_replace($urlPrincipal, '', $url);
             }
 
             $datosArticulos[] = [
@@ -285,9 +290,9 @@ class Article extends Component
                 'separador' => $separador,
                 'fecha' => $fecha,
                 'avatar' => $avatar,
-                'url' => $url,
+                'url' => $hrefPrincipal,
                 'urlPrincipal' => $urlPrincipal,
-                'path' => $path,
+                'path' => $pathSinBarras,
             ];
         });
 
@@ -298,14 +303,14 @@ class Article extends Component
 
             $url = 'Sin URL';
             $href = $categoria->filter('a')->attr('href');
-            // Quitar el '/' inicial si está presente
-            $href = ltrim($href, '/');
-            // Verificar si la URL del 'href' es relativa y completarla
-            if (strpos($href, 'http') === false) {
-                $baseUrl = $this->search; // Cambia esto por la URL base correcta si es necesario
-                $url = $baseUrl . $href;
-            } else {
+
+            // Condicional para verificar si el URL tiene un esquema (http/https) y un dominio
+            if (filter_var($href, FILTER_VALIDATE_URL)) {
+                // Si el URL es válido, lo dejamos tal cual está
                 $url = $href;
+            } else {
+                // Luego concatenamos el href
+                $url = $this->search . $href;
             }
 
             // Separar URL principal y el resto del path
@@ -328,21 +333,10 @@ class Article extends Component
         ];
     }
 
-    public function reemplazarGuionPorEspacio($categoria)
-    {
-        // Reemplaza el guion por un espacio solo si el guion está presente en la categoría
-        if (strpos($categoria, '-') !== false) {
-            return str_replace('-', ' ', $categoria);
-        } else {
-            return $categoria;
-        }
-    }
-
     public function guardarArticulos($datosArticulos)
     {
         if ($datosArticulos) {
             $url = $datosArticulos;
-            // dd($url);
 
             // Obtener el contenido HTML de la página
             $html = $this->obtenerContenidoHTML($url);
@@ -378,32 +372,12 @@ class Article extends Component
                 }
 
                 // Extraer los datos
-                $datosExtraidos = $this->extraerDatos($html);
-                $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+                $datosExtraidos = $this->extraerDatos($html, $this->search);
                 $categorias = $datosExtraidos['categorias']; // Acceder al array de categorías
-
-                foreach ($articulos as $articulo) {
-                    ModelsArticle::updateOrCreate(
-                        [
-                            'url' => $articulo['url'],
-                        ],
-                        [
-                            'urlPrincipal' => $datosArticulos,
-                            'path' => $articulo['path'],
-                            'titulo' => $articulo['titulo'],
-                            'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
-                            'categoria' => $articulo['categoria'],
-                            'autor' => $articulo['autor'],
-                            'fecha' => $articulo['fecha'],
-                            'avatar' => $articulo['avatar'],
-                            'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
-                        ],
-                    );
-                }
 
                 foreach ($categorias as $categoria) {
                     if ($categoria['titulo'] != 'Sin título') {
-                        if ($categoria['titulo'] == 'INICIO' || $categoria['titulo'] == 'SUSCRÍBETE' || $categoria['titulo'] == 'PERÚ' || $categoria['titulo'] == 'NEWSLETTERS') {
+                        if ($categoria['titulo'] == 'INICIO' || $categoria['titulo'] == 'CINE Y SERIES' || $categoria['titulo'] == 'SUSCRÍBETE' || $categoria['titulo'] == 'PERÚ' || $categoria['titulo'] == 'NEWSLETTERS' || $categoria['titulo'] == 'ÚLTIMAS NOTICIAS') {
                             // No hacer nada si el título es "INICIO" o "SUSCRÍBETE"
                         } else {
                             Category::updateOrCreate(
@@ -416,8 +390,210 @@ class Article extends Component
                                     'slug' => $categoria['slug'],
                                 ],
                             );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://diariosinfronteras.com.pe/category/espectaculos/',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://diariosinfronteras.com.pe/',
+                                    'name' => 'ESPÉCTACULOS',
+                                    'slug' => 'espectaculos',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://diariosinfronteras.com.pe/category/diariosf/',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://diariosinfronteras.com.pe/',
+                                    'name' => 'DIARIOSF',
+                                    'slug' => 'diariosf',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://diariosinfronteras.com.pe/category/escenario/',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://diariosinfronteras.com.pe/',
+                                    'name' => 'ESCENARIO',
+                                    'slug' => 'escenario',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/carlincatura',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'CARLINCATURA',
+                                    'slug' => 'carlincatura',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/publirreportajes',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'PUBLIREPORTAJES',
+                                    'slug' => 'publirreportajes',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/entretenimiento',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'ENTRETENIMIENTO',
+                                    'slug' => 'entretenimiento',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/ciencia',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'CIENCIA',
+                                    'slug' => 'ciencia',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/espectaculos',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'ESPECTÁCULOS',
+                                    'slug' => 'espectaculos',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/tecnologia',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'TECNOLOGÍAS',
+                                    'slug' => 'tecnologia',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/tendencias',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'TENDENCIAS',
+                                    'slug' => 'tendencias',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/cine-series',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'CINE Y SERIES',
+                                    'slug' => 'cine-series',
+                                ],
+                            );
+
+                            Category::updateOrCreate(
+                                [
+                                    'url' => 'https://larepublica.pe/gastronomia',
+                                ],
+                                [
+                                    'urlPrincipal' => 'https://larepublica.pe/',
+                                    'name' => 'GASTRONOMÍA',
+                                    'slug' => 'gastronomia',
+                                ],
+                            );
                         }
                     }
+
+                    if ($this->search === 'https://losandes.com.pe/') {
+                        // Agregar categorías manualmente
+                        Category::updateOrCreate(
+                            [
+                                'url' => 'https://losandes.com.pe/diario-virtual/',
+                            ],
+                            [
+                                'urlPrincipal' => 'https://losandes.com.pe/',
+                                'name' => 'DIARIO VIRTUAL',
+                                'slug' => 'diario-virtual',
+                            ],
+                        );
+                    } elseif ($this->search === 'https://larepublica.pe/') {
+                        // Agregar categorías manualmente
+                        Category::updateOrCreate(
+                            [
+                                'url' => 'https://larepublica.pe/carlincatura',
+                            ],
+                            [
+                                'urlPrincipal' => 'https://larepublica.pe/',
+                                'name' => 'CARLINCATURA',
+                                'slug' => 'carlincatura',
+                            ],
+                        );
+                    }
+                }
+
+                $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+
+                foreach ($articulos as $articulo) {
+                    // Extraer solo la primera parte del path antes del primer '/'
+                    if ($this->search === 'https://losandes.com.pe/') {
+                        if ($articulo['categoria'] === 'Sin categoria') {
+                            return; // Salta al siguiente artículo
+                        }
+                        $categoriaFinal = $articulo['categoria'];
+                    } elseif ($this->search === 'https://larepublica.pe') {
+                        $pathParts = explode('/', trim($articulo['path'], '/')); // Elimina los '/' extra al principio y al final
+                        $categoriaPath = $pathParts[0];
+                        if ($categoriaPath === 'nota-de-prensa' || $categoriaPath === 'estados-unidos') {
+                            continue; // Salta al siguiente artículo
+                        }
+                        $categoriaSlug = Category::where('slug', $categoriaPath)->first();
+                        $categoriaFinal = $categoriaSlug['name'];
+                    } elseif ($this->search === 'https://diariosinfronteras.com.pe/') {
+                        // Verificar si la imagen es null o vacía
+                        if (empty($articulo['imagen']) || $articulo['imagen'] === 'Sin imagen' || $articulo['categoria'] === 'Sin categoria') {
+                            continue; // Salta al siguiente artículo si no hay imagen
+                        }
+                        $categoriaFinal = $articulo['categoria'];
+                    }
+
+                    // Si la categoría es válida, registra el artículo
+                    ModelsArticle::updateOrCreate(
+                        [
+                            'url' => $articulo['url'], // Usa la URL corregida
+                        ],
+                        [
+                            'urlPrincipal' => $datosArticulos,
+                            'path' => $articulo['path'],
+                            'titulo' => $articulo['titulo'],
+                            'imagen' => $articulo['imagen'] !== 'Sin imagen' ? $articulo['imagen'] : null,
+                            'categoria' => $categoriaFinal,
+                            'autor' => $articulo['autor'],
+                            'fecha' => $articulo['fecha'],
+                            'avatar' => $articulo['avatar'],
+                            'extracto' => $articulo['extracto'] !== 'Sin extracto' ? $articulo['extracto'] : null,
+                        ]
+                    );
                 }
             } else {
                 return;
@@ -498,13 +674,13 @@ class Article extends Component
                 if ($diarios === 'https://losandes.com.pe/') {
                     $url = $diarios . 'category/' . $diarioCategoria->slug;
                 } elseif ($diarios === 'https://diariosinfronteras.com.pe/') {
-                    $url = $diarios . '' . $diarioCategoria->slug;
+                    $url = $diarios . 'category/' . $diarioCategoria->slug;
                 } else {
                     // Obtén el slug de la categoría y reemplaza 'y' con un guion
                     $slug = str_replace('-y-', '-', $diarioCategoria->slug);
 
                     // Combina el URL base con el slug modificado
-                    $url = $diarios . $slug;
+                    $url = $diarioCategoria->url;
                 }
 
                 $html = $this->obtenerContenidoHTML($url);
@@ -513,7 +689,12 @@ class Article extends Component
                     $datosExtraidos = $this->extraerDatosCategoria($html);
                     $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
 
+                    // dd($articulos);
                     foreach ($articulos as $articulo) {
+                        if ($articulo['categoria'] === 'Sin categoria') {
+                            continue;
+                        }
+
                         ModelsArticle::updateOrCreate(
                             [
                                 'url' => $articulo['url'],
@@ -546,15 +727,34 @@ class Article extends Component
     {
         $crawler = new Crawler($html);
 
-        $articulos = $crawler->filter('.tdi_88, .tdb_module_loop, .td-category-pos-above, .sp-pcp-post-thumb-area, .extend-link--outside, .ListSection_list__section--item__zeP_z, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12');
+        // $articulos = $crawler->filter('.tdi_88, .tdb_module_loop, .td-category-pos-above, .sp-pcp-post-thumb-area, .extend-link--outside, .ListSection_list__section--item__zeP_z, .bd-fm-post-0, fm-post-sec, .ws-post-first, .ws-post-sec, .MainSpotlight_primary__other__PEhAc, .MainSpotlight_secondarySpotlight__item__UWjdv, .MainSpotlight_lateral__item__PuIEF, .ItemSection_itemSection__D8r12, .top-nav li');
+
+        if ($this->search === 'https://larepublica.pe/') {
+            $articulos = $crawler->filter(
+                'div.wrapper__content.mh-600 .MainSpotlight_primary__other__PEhAc,
+                        div.wrapper__content.mh-600 .MainSpotlight_secondarySpotlight__item__UWjdv,
+                        div.wrapper__content.mh-600 .MainSpotlight_lateral__item__PuIEF,
+                        div.wrapper__content.mh-600 .ItemSection_itemSection__D8r12'
+            );
+        } elseif ($this->search === 'https://losandes.com.pe/') {
+            $articulos = $crawler->filter('div.tdc_zone.tdi_80.wpb_row.td-pb-row div.td-module-container');
+        } elseif ($this->search === 'https://diariosinfronteras.com.pe/') {
+            $articulos = $crawler->filter('div.layout-inner div.layout-wrap');
+        } elseif ($this->search === 'https://www.expreso.com.pe/') {
+            $articulos = $crawler->filter('div.uk-home-body div.uk-inline, div.uk-home-body div.uk-card.uk-card-simple, div.uk-home-body div.uk-cover-container');
+        }
 
         $datosArticulos = [];
 
         // Recorrer cada artículo y extraer el título, el extracto, la categoría y la imagen
         $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
-            $titulo = $articulo->filter('.entry-title a, figcaption h1, .extend-link')->count() > 0 ? $articulo->filter('.entry-title a, figcaption h1, .extend-link')->text() : 'Sin título';
+            //$titulo = $articulo->filter('h3.entry-title.td-module-title a, figcaption h1, .extend-link, a')->count() > 0 ? $articulo->filter('h3.entry-title.td-module-title a, figcaption h1, .extend-link, a')->text() : 'Sin título';
             $extracto = $articulo->filter('.td-excerpt')->count() > 0 ? $articulo->filter('.td-excerpt')->text() : 'Sin extracto';
-            $categoria = $articulo->filter('.td-post-category .post-cats-bd .fmm-cats')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
+            $categoria = $articulo->filter('.td-post-category, div.post-cats a')->count() > 0 ? $articulo->filter('.td-post-category, div.post-cats a')->text() : 'Sin categoria';
+
+            $titulo = $articulo->filter('h3.entry-title.td-module-title a, h3.entry-title a')->count() > 0
+                ? $articulo->filter('h3.entry-title.td-module-title a, h3.entry-title a')->text()
+                : 'Sin título';
 
             // Primero intenta con 'data-img-url', luego con 'src'
             $imagen = 'Sin imagen';
@@ -611,7 +811,7 @@ class Article extends Component
 
             $url = 'Sin URL';
 
-            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link')->attr('href');
+            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link, a')->attr('href');
 
             // Verificar si la URL del 'href' es relativa y completarla
             if (strpos($href, 'http') === false) {
@@ -646,6 +846,16 @@ class Article extends Component
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario Sin Fronteras';
+                    }
+                } elseif ($urlPrincipal === 'https://www.expreso.com.pe/') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario Expreso';
                     }
                 } else {
                     $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
