@@ -13,6 +13,7 @@ class UserForm extends Form
     public $phone;
     public $email;
     public $status;
+    public $membership_id;
     public $password;
     public $password_confirmation;
 
@@ -25,6 +26,7 @@ class UserForm extends Form
             'phone' => 'required|min:11',
             'email' => 'required|email|max:255|unique:users,email' . ($this->id ? ',' . $this->id : ''),
             'status' => 'required',
+            'membership_id' => 'required',
             'password' => ($this->id ? 'nullable' : 'required|min:8') ,
             'password_confirmation' => ($this->id ? 'nullable' : 'required|min:8|same:password'),
         ];

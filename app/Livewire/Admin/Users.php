@@ -73,6 +73,7 @@ class Users extends Component
         $userData = $this->form->toArray();
         if (!isset($this->user->id)) {
             $userData['password'] = bcrypt($this->form->password);
+            $userData['membership_id'] = (int)$this->form->membership_id;
             User::create($userData);
             toast()->success('Usuario creado correctamente', 'Mensaje de éxito')->push();
         } else {
@@ -81,6 +82,7 @@ class Users extends Component
             } else {
                 unset($userData['password']);
             }
+            $userData['membership_id'] = (int)$this->form->membership_id;
             $this->user->update($userData);
             event(new UserCreated($userData));
             toast()->success('Usuario actualizado correctamente', 'Mensaje de éxito')->push();

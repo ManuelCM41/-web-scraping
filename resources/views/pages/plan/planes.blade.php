@@ -40,7 +40,7 @@
         @endif
     </header>
 
-    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: auto;">
+    <div class="bg-white rounded-md" style="font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: auto;">
         <!-- TÍTULO Y DESCRIPCIÓN -->
         <div style="text-align: center; margin-bottom: 40px;">
             <!-- TÍTULO -->
@@ -64,9 +64,10 @@
                 <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
                     <li>✔ Acceso limitado</li>
                     <li>✔ Soporte básico</li>
-                    <li>✔ Hasta 1 proyecto</li>
+                    <li>✔ Hasta 1 Diario</li>
+                    <li>✔ Hasta 3 veces de Scrapeo</li>
                 </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #2ECC71;">$0/mes</p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: #2ECC71;">S/0.00/mes</p>
                 <button wire:click="iniciarPago('Free', 0)"
                     style="padding: 10px 20px; background-color: #2ECC71; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
                     Empezar Gratis
@@ -83,9 +84,10 @@
                 <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
                     <li>✔ Acceso completo</li>
                     <li>✔ Soporte prioritario</li>
-                    <li>✔ Hasta 10 proyectos</li>
+                    <li>✔ Hasta 2 Diarios</li>
+                    <li>✔ Hasta 10 veces de Scrapeo</li>
                 </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #3498DB;">$15/mes</p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: #3498DB;">S/15.00/mes</p>
                 <button wire:click="iniciarPago('Pro', 10)"
                     style="padding: 10px 20px; background-color: #3498DB; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
                     Suscribirse
@@ -102,10 +104,10 @@
                 <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
                     <li>✔ Acceso total</li>
                     <li>✔ Soporte 24/7</li>
-                    <li>✔ Proyectos ilimitados</li>
-                    <li>✔ Herramientas premium</li>
+                    <li>✔ Hasta 5 Diarios</li>
+                    <li>✔ Hasta 20 veces de Scrapeo</li>
                 </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #E74C3C;">$30/mes</p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: #E74C3C;">S/30.00/mes</p>
                 <button wire:click="iniciarPago('Pro Max', 30)"
                     style="padding: 10px 20px; background-color: #E74C3C; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
                     Unirse Ahora

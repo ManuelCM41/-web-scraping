@@ -32,6 +32,7 @@ class User extends Authenticatable
         'phone',
         'status',
         'online',
+        'membership_id',
         'email',
         'password',
     ];

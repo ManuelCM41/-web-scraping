@@ -142,41 +142,106 @@
                     <div class="xl:col-span-2 lg:col-span-2 md:col-span-1 sm:col-span-1">
                         <div class="grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-1 sm:grid-cols-1 gap-2">
                             {{-- 2da COLUMNA -> PRÓXIMOS PASOS --}}
-                            <div class="bg-white px-6 py-3 rounded-lg">
-                                <span class="font-extrabold text-xl mb-2">Formas de pago</span>
-
-                                <div class="grid grid-cols-2 gap-4 m-5">
-                                    <button wire:click.prevent="storePaypal()" wire:target="storePaypal"
-                                        class="border rounded-md p-2"><img class="rounded-md"
-                                            src="/images/pay/pay_paypal.png" alt=""></button>
-                                    <a href="#" class="border rounded-md p-2"><img class="rounded-md"
-                                            src="/images/pay/pay_pagoefectivo.png" alt=""></a>
-                                    <button wire:click.prevent="storeYape()" wire:target="storeYape"
-                                        class="border rounded-md p-2"><img class="rounded-md"
-                                            src="/images/pay/pay_yape.jpg" alt=""></button>
-                                    <a href="#" class="border rounded-md p-2"><img class="rounded-md"
-                                            src="/images/pay/pay_plin.png" alt=""></a>
-                                </div>
-                            </div>
-                            {{-- 3ra COLUMNA -> RESUMEN DE COMPRA --}}
-                            <div class="bg-white px-6 py-3 rounded-lg">
+                            <div class="bg-white px-6 py-5 rounded-lg shadow-md">
                                 @php
                                     $nombrePlan = session('nombrePlan');
                                     $precioPlan = session('precioPlan');
+                                    $beneficiosFree = [
+                                        'Acceso limitado',
+                                        'Soporte básico',
+                                        'Hasta 1 Diario',
+                                        'Hasta 3 veces de Scrapeo',
+                                    ];
 
+                                    $beneficiosPro = [
+                                        'Acceso completo',
+                                        'Soporte prioritario',
+                                        'Hasta 2 Diarios',
+                                        'Hasta 10 veces de Scrapeo',
+                                    ];
+
+                                    $beneficiosProMax = [
+                                        'Acceso total',
+                                        'Soporte técnico 24/7',
+                                        'Hasta 5 Diarios',
+                                        'Hasta 20 veces de Scrapeo',
+                                    ];
                                 @endphp
-                                <span class="font-extrabold text-xl">Resumen de tu compra</span>
-                                <div class="overflow-y-auto max-h-56 sm:max-h-56 md:max-h-56 lg:max-h-none divide-y">
-                                    Tipo de Plan: {{ $nombrePlan }}
-                                </div>
-                                <div class="mt-4 flex justify-between gap-16">
-                                    <span>Total a pagar</span>
-                                    <span class="text-lg font-bold">
 
+                                {{-- Título --}}
+                                <span class="font-extrabold text-xl block mb-3">Resumen de tu compra</span>
+
+                                {{-- Detalle del tipo de plan --}}
+                                <div class="overflow-y-auto max-h-56 sm:max-h-56 md:max-h-56 lg:max-h-none divide-y">
+                                    <p class="mb-3"><strong>Tipo de Plan:</strong> {{ $nombrePlan }}</p>
+
+                                    {{-- Beneficios del plan --}}
+                                    <div>
+                                        <strong>Beneficios incluidos:</strong>
+                                        <ul class="list-disc pl-5 mt-2 text-sm text-gray-700">
+                                            @if ($nombrePlan === 'Free')
+                                                @foreach ($beneficiosFree as $beneficio)
+                                                    <li>{{ $beneficio }}</li>
+                                                @endforeach
+                                            @elseif ($nombrePlan === 'Pro')
+                                                @foreach ($beneficiosPro as $beneficio)
+                                                    <li>{{ $beneficio }}</li>
+                                                @endforeach
+                                            @else
+                                                @foreach ($beneficiosProMax as $beneficio)
+                                                    <li>{{ $beneficio }}</li>
+                                                @endforeach
+                                            @endif
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {{-- Precio total a pagar --}}
+                                <div class="mt-6 flex justify-between items-center">
+                                    <span class="text-gray-700 font-medium">Total a pagar</span>
+                                    <span class="text-lg font-bold text-green-600">
                                         S/ {{ number_format($precioPlan, 2) }}
                                     </span>
                                 </div>
+
+                                {{-- Botón para continuar --}}
+                                <div class="mt-6 text-center">
+                                    <button
+                                        class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                        Continuar con el pago
+                                    </button>
+                                </div>
                             </div>
+
+                            {{-- 3ra COLUMNA -> RESUMEN DE COMPRA --}}
+                            <div class="bg-white px-6 py-4 rounded-lg shadow-md">
+                                <span class="font-extrabold text-xl mb-2 block">Formas de pago</span>
+
+                                {{-- Texto introductorio --}}
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Elige la forma de pago que más se acomode a tus necesidades. Ofrecemos opciones
+                                    seguras y convenientes para completar tu compra.
+                                </p>
+
+                                <div class="grid grid-cols-2 gap-4 m-5">
+                                    <button wire:click.prevent="storePaypal()" wire:target="storePaypal"
+                                        class="border rounded-md p-2 hover:shadow-md transition">
+                                        <img class="rounded-md" src="/images/pay/pay_paypal.png" alt="Pago con PayPal">
+                                    </button>
+                                    <a href="#" class="border rounded-md p-2" disabled>
+                                        <img class="rounded-md" src="/images/pay/pay_pagoefectivo.png"
+                                            alt="Pago en efectivo">
+                                    </a>
+                                    <button wire:click.prevent="storeYape()" disabled wire:target="storeYape"
+                                        class="border rounded-md p-2 hover:shadow-md transition">
+                                        <img class="rounded-md" src="/images/pay/pay_yape.jpg" alt="Pago con Yape">
+                                    </button>
+                                    <a href="#" class="border rounded-md p-2" disabled>
+                                        <img class="rounded-md" src="/images/pay/pay_plin.png" alt="Pago con Plin">
+                                    </a>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>

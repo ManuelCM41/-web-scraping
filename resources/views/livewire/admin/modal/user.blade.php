@@ -40,12 +40,23 @@
                         disabled="{{ $showUser }}" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <x-select-label for="form.status" label="Estado" wire:model.live="form.status"
-                        disabled="{{ $showUser }}">
-                        <option value="" selected>Seleccione una opcion..</option>
-                        <option value="0">Inactivo</option>
-                        <option value="1">Activo</option>
-                    </x-select-label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-select-label for="form.status" label="Estado" wire:model.live="form.status"
+                            disabled="{{ $showUser }}">
+                            <option value="" selected>Seleccione una opcion..</option>
+                            <option value="0">Inactivo</option>
+                            <option value="1">Activo</option>
+                        </x-select-label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-select-label for="form.membership_id" label="Plan" wire:model.live="form.membership_id"
+                            disabled="{{ $showUser }}">
+                            <option value="" selected>Seleccione una opción..</option>
+                            <option value="1">Free</option>
+                            <option value="2">Pro</option>
+                            <option value="3">Pro Max</option>
+                        </x-select-label>
+                    </div>
                 </div>
             </div>
         </form>
