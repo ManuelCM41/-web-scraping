@@ -102,7 +102,7 @@
 
             @if (Route::has('login'))
                 <nav class="-mx-3 flex flex-1 justify-end gap-3 items-center">
-                    <a href="#">
+                    <a href="{{ route('planes') }}">
                         <span class="text-md">Planes</span>
                     </a>
                     @auth
@@ -209,4 +209,130 @@
             </div>
         </x-card>
     </div>
+    <?php
+
+    use Symfony\Component\DomCrawler\Crawler;
+    use GuzzleHttp\Client;
+    use App\Models\Moneda;
+
+    // Función para obtener el contenido HTML de la página
+    function obtenerContenidoHTML($url)
+    {
+        // Crear una instancia del cliente Guzzle
+        $client = new Client();
+
+        try {
+            // Configurar opciones para la solicitud
+            $options = [
+                'connect_timeout' => 100,
+                'timeout' => 100,
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+                ],
+                'verify' => false, // Desactivar verificación SSL si es necesario
+            ];
+
+            // Hacer la solicitud GET a la URL con las opciones configuradas
+            $response = $client->request('GET', $url, $options);
+
+            // Verificar si la respuesta fue exitosa (código de estado 200)
+            if ($response->getStatusCode() === 200) {
+                // Obtener el contenido HTML de la respuesta
+                return $response->getBody()->getContents();
+            } else {
+                return false;
+            }
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    // Función para extraer y actualizar los datos de la moneda
+    function extraerYActualizarDatosMoneda($html)
+    {
+        // Crear una instancia de Crawler para analizar el HTML
+        $crawler = new Crawler($html);
+
+        // Buscar la fila específica por su ID
+        $fila = $crawler->filter('table.table.table-sm.tableFlex');
+        // dd($fila);
+
+        if ($fila->count() > 0) {
+            // Obtener las celdas de la fila
+            $celdas = $fila->filter('td');
+            // dd($celdas);
+            // Verificar si hay al menos 2 celdas en la fila
+            if ($celdas->count() >= 0) {
+                // Obtener el valor de la moneda y el promedio ponderado
+                $moneda = $celdas->eq(0)->text();
+                $promedio_ponderado = $celdas->eq(3)->text();
+
+                // Usamos una expresión regular para extraer el número decimal
+                preg_match('/\d+,\d+/', $promedio_ponderado, $matches);
+
+                if (!empty($matches)) {
+                    // Convertimos el número al formato correcto para operaciones (de coma a punto)
+                    $numero = str_replace(',', '.', $matches[0]);
+
+                    // Redondeamos a dos decimales
+                    $numero_redondeado = round((float)$numero, 2);
+
+                    // dd($numero_redondeado); // Mostrará 3.80
+                } else {
+                    // dd('No se encontró un número decimal');
+                }
+                // Actualizar en la base de datos
+                $monedaUpdate = Moneda::find(1);
+                $monedaUpdate->update([
+                    'tasa' => $numero_redondeado,
+                ]);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function monedaActualizadaHoy()
+    {
+        // Obtener la instancia de Moneda
+        $moneda = Moneda::find(1);
+
+        // Verificar si la moneda ha sido actualizada en el día actual
+        return $moneda->updated_at->isToday();
+    }
+
+    // Verificar si la moneda ha sido actualizada hoy antes de hacer una nueva solicitud
+    if (!monedaActualizadaHoy()) {
+        $url = "https://www.eleconomista.es/cruce/USDPEN";
+        // Obtener el contenido HTML de la página
+        $html = obtenerContenidoHTML($url);
+
+        // dd($html);
+
+        if ($html !== false) {
+            // dd('pasó');
+            // Extraer y actualizar los datos de la moneda
+            if (extraerYActualizarDatosMoneda($html)) {
+                echo "<div style='display: none;'>";
+                echo '<span>Datos actualizados correctamente.</span><br>';
+                echo '</div>';
+            } else {
+                echo "<div style='display: none;'>";
+                echo '<span>La fila de datos no tiene suficientes celdas.</span><br>';
+                echo '</div>';
+            }
+        } else {
+            echo "<div style='display: none;'>";
+            echo '<span>La solicitud no fue exitosa. No se pudo obtener el contenido HTML o se excedió el tiempo de espera.</span><br>';
+            echo '</div>';
+        }
+    } else {
+        echo "<div style='display: none;'>";
+        echo '<span>La moneda ya ha sido actualizada hoy.</span><br>';
+        echo '</div>';
+    }
+
+    ?>
 </div>

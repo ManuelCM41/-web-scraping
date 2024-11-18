@@ -126,7 +126,7 @@
                             <!-- Item -->
                             <li class="flex px-2">
                                 <div
-                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-500 my-2 mr-3 text-white flex items-center justify-center">
+                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-300 my-2 mr-3 text-white flex items-center justify-center">
                                     <i class="fa-solid fa-building-columns fa-fw"></i>
                                 </div>
                                 <div class="grow flex items-center text-sm py-2">
@@ -143,6 +143,31 @@
                                         <div class="shrink-0 self-end ml-2">
                                             <a class="font-medium text-violet-500 hover:text-violet-600 dark:hover:text-violet-400"
                                                 href="#0">View<span class="hidden sm:inline"> -&gt;</span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+
+                            <!-- Item -->
+                            <li class="flex px-2">
+                                <div
+                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-600 my-2 mr-3 text-white flex items-center justify-center">
+                                    <i class="fa-solid fa-building-columns fa-fw"></i>
+                                </div>
+                                <div class="grow flex items-center text-sm py-2">
+                                    <div class="grow flex justify-between">
+                                        <div class="self-center flex gap-1">
+                                            En el diario <b>El Comercio</b> se escrapeo
+                                            @if ($articles4Today->count() <= 2)
+                                            {{ $articles4Today->count() }}
+                                            @else
+                                            <x-counter-animation>{{ $articles4Today->count() }}</x-counter-animation>
+                                            @endif
+                                            noticias en total
+                                        </div>
+                                        <div class="shrink-0 self-end ml-2">
+                                            <a class="font-medium text-violet-500 hover:text-violet-600 dark:hover:text-violet-400"
+                                               href="#0">View<span class="hidden sm:inline"> -&gt;</span></a>
                                         </div>
                                     </div>
                                 </div>
@@ -208,7 +233,7 @@
 
                             <li class="flex px-2">
                                 <div
-                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-500 my-2 mr-3 text-white flex items-center justify-center">
+                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-300 my-2 mr-3 text-white flex items-center justify-center">
                                     <i class="fa-solid fa-building-columns fa-fw"></i>
                                 </div>
                                 <div class="grow flex items-center text-sm py-2">
@@ -229,6 +254,30 @@
                                     </div>
                                 </div>
                             </li>
+
+                            <li class="flex px-2">
+                                <div
+                                    class="w-9 h-9 rounded-full shrink-0 bg-yellow-600 my-2 mr-3 text-white flex items-center justify-center">
+                                    <i class="fa-solid fa-building-columns fa-fw"></i>
+                                </div>
+                                <div class="grow flex items-center text-sm py-2">
+                                    <div class="grow flex justify-between">
+                                        <div class="self-center flex gap-1">
+                                            En el diario <b>El Comercio</b> se obtuvo del escrapeo
+                                            @if ($articles4Yesterday->count() <= 2)
+                                            {{ $articles4Yesterday->count() }}
+                                            @else
+                                            <x-counter-animation>{{ $articles4Yesterday->count() }}</x-counter-animation>
+                                            @endif
+                                            noticias en total
+                                        </div>
+                                        <div class="shrink-0 self-end ml-2">
+                                            <a class="font-medium text-violet-500 hover:text-violet-600 dark:hover:text-violet-400"
+                                               href="#0">View<span class="hidden sm:inline"> -&gt;</span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -245,6 +294,7 @@
                         <option value="https://losandes.com.pe/">Los Andes</option>
                         <option value="https://diariosinfronteras.com.pe/">Sin Fronteras</option>
                         <option value="https://larepublica.pe/">La Republica</option>
+                        <option value="https://elcomercio.pe/">El Comercio</option>
                     </x-select-label>
                     <x-select-label for="form.status" label="Categoria" wire:model.live="categorySelected">
                         <option value="" selected>Todos</option>
@@ -275,21 +325,23 @@
     <script type="module">
         // Configuración inicial del gráfico
         const chartBardata = {
-            labels: ["Los Andes", "Sin Fronteras", "La Republica"],
+            labels: ["Los Andes", "Sin Fronteras", "La Republica", "El Comercio"],
             datasets: [{
                 label: 'Total de Noticias',
                 data: [{{ $articles1->count() }}, {{ $articles2->count() }},
-                    {{ $articles3->count() }}
+                    {{ $articles3->count() }}, {{ $articles4->count() }}
                 ],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.5)',
                     'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 205, 86, 0.5)'
+                    'rgba(255, 205, 86, 0.5)',
+                    'rgba(255, 203, 5, 1)',
                 ],
                 borderColor: [
                     'rgb(255, 99, 132)',
                     'rgb(54, 162, 235)',
-                    'rgb(255, 205, 86)'
+                    'rgb(255, 205, 86)',
+                    'rgb(255, 203, 100)',
                 ],
                 borderWidth: 1
             }]
@@ -307,21 +359,23 @@
         );
 
         const polarAreadata = {
-            labels: ["Los Andes", "Sin Fronteras", "La Republica"],
+            labels: ["Los Andes", "Sin Fronteras", "La Republica", "El Comercio"],
             datasets: [{
                 label: 'Total de Noticias',
                 data: [{{ $articles1Today->count() }}, {{ $articles2Today->count() }},
-                    {{ $articles3Today->count() }}
+                    {{ $articles3Today->count() }}, {{ $articles4Today->count() }}
                 ],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.5)',
                     'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 205, 86, 0.5)'
+                    'rgba(255, 205, 86, 0.5)',
+                    'rgba(255, 203, 5, 1)',
                 ],
                 borderColor: [
                     'rgb(255, 99, 132)',
                     'rgb(54, 162, 235)',
-                    'rgb(255, 205, 86)'
+                    'rgb(255, 205, 86)',
+                    'rgb(255, 203, 100)',
                 ],
                 borderWidth: 1
             }]

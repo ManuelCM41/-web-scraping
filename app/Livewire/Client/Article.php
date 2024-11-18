@@ -54,9 +54,10 @@ class Article extends Component
 
         // Definimos los diarios
         $this->diarios = [
-            'https://diariosinfronteras.com.pe/' => 'Diario Sin Fronteras',
+            'https://diariosinfronteras.com.pe/' => 'Sin Fronteras',
             'https://losandes.com.pe/' => 'Los Andes',
             'https://larepublica.pe/' => 'La República',
+            'https://elcomercio.pe/' => 'El Comercio',
         ];
 
         $this->diariosCategoria = Category::all();
@@ -66,7 +67,9 @@ class Article extends Component
 
             $categories = Category::where('urlPrincipal', $this->search)->pluck('name');
 
-            $this->guardarArticulosCategoria($this->search, $categories);
+            if($this->search != 'https://elcomercio.pe/') {
+                $this->guardarArticulosCategoria($this->search, $categories);
+            }
 
             $articulos = ModelsArticle::where('url', 'like', '%' . $this->search . '%')
                 ->orderBy('created_at', 'desc')
@@ -104,7 +107,7 @@ class Article extends Component
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
                 ],
-                    'verify' => false, // Desactivar verificación SSL si es necesario
+                'verify' => false, // Desactivar verificación SSL si es necesario
             ];
 
             $response = $client->request('GET', $url, $options);
@@ -135,8 +138,8 @@ class Article extends Component
             $articulos = $crawler->filter('div.tdc_zone.tdi_80 .sp-pcp-post-thumb-area, div.tdc_zone.tdi_80 .td-category-pos-above');
         } elseif ($link === 'https://diariosinfronteras.com.pe/') {
             $articulos = $crawler->filter('div#featured-main.featured-main .fm-story, div#main.main div.post');
-        } elseif ($link === 'https://www.expreso.com.pe/') {
-            $articulos = $crawler->filter('div.uk-home-body div.uk-inline, div.uk-home-body div.uk-card.uk-card-simple, div.uk-home-body div.uk-cover-container');
+        } elseif ($link === 'https://elcomercio.pe/') {
+            $articulos = $crawler->filter('div.grid.grid--content.content-layout.grid--col-1.grid--col-2.grid--col-3.mt-20.mb-20 div.fs-wi.fs-container');
         }
 
         $categorias = $crawler->filter('.menu-item-object-category, .Header_container-header_menu-secciones-item__3sngP, .bd_menu_item');
@@ -146,34 +149,38 @@ class Article extends Component
 
         // Recorrer cada artículo y extraer el título, el extracto, la categoría y la imagen
         $articulos->each(function (Crawler $articulo) use (&$datosArticulos) {
-            $titulo = $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title')->count() > 0 ? $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title')->text() : 'Sin título';
+            $titulo = $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title, h2.fs-wis__title-text, h2.fs-wi__title')->count() > 0 ? $articulo->filter('.entry-title a, h3.entry-title.td-module-title, figcaption h1, .extend-link, h3.uk-card-title, h2.fs-wis__title-text, h2.fs-wi__title')->text() : 'Sin título';
             $extracto = $articulo->filter('.td-excerpt')->count() > 0 ? $articulo->filter('.td-excerpt')->text() : 'Sin extracto';
             $categoria = $articulo->filter('.td-post-category')->count() > 0 ? $articulo->filter('.td-post-category')->text() : 'Sin categoria';
 
             // Primero intenta con 'data-img-url', luego con 'src'
             $imagen = 'Sin imagen';
 
-            // Verificar si existe un enlace con clase 'img' y atributo 'style' que contiene la imagen
-            if ($articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->count() > 0) {
-                $style = $articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->attr('style');
-                // Usar una expresión regular para extraer la URL dentro de 'background-image:url(...)'
-                preg_match('/background-image:url\((.*?)\)/', $style, $matches);
+            if ($this->search === 'https://elcomercio.pe/') {
+                $imagen = $articulo->filter('.fs-wi__img-link img, div img, a img')->attr('data-src');
+            } else {
+                // Verificar si existe un enlace con clase 'img' y atributo 'style' que contiene la imagen
+                if ($articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->count() > 0) {
+                    $style = $articulo->filter('a.img, .ws-post-first, .ws-post-sec, div img.uk-width-1-1')->attr('style');
+                    // Usar una expresión regular para extraer la URL dentro de 'background-image:url(...)'
+                    preg_match('/background-image:url\((.*?)\)/', $style, $matches);
 
-                // Si se encuentra una coincidencia, el segundo elemento del array contiene la URL de la imagen
-                if (isset($matches[1])) {
-                    $imagen = $matches[1];
+                    // Si se encuentra una coincidencia, el segundo elemento del array contiene la URL de la imagen
+                    if (isset($matches[1])) {
+                        $imagen = $matches[1];
+                    }
                 }
-            }
 
-            // Si no se encontró imagen en el 'style', intentar con los atributos 'data-img-url' o 'src'
-            if ($imagen === 'Sin imagen' && $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->count() > 0) {
-                // Intentar extraer primero el atributo 'data-img-url'
-                if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
-                    $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
-                }
-                // Si no existe 'data-img-url', intentar con 'src'
-                elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
-                    $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
+                // Si no se encontró imagen en el 'style', intentar con los atributos 'data-img-url' o 'src'
+                if ($imagen === 'Sin imagen' && $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img, .fs-wi__img-link img')->count() > 0) {
+                        // Intentar extraer primero el atributo 'data-img-url'
+                        if ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url')) {
+                            $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('data-img-url');
+                        } // Si no existe 'data-img-url', intentar con 'src'
+                        elseif ($articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src')) {
+                            $imagen = $articulo->filter('.entry-thumb, .sp-pcp-thumb img, a.img, div.ws-thumbnail img, figure.undefined img, div img')->attr('src');
+                        }
+
                 }
             }
 
@@ -200,7 +207,7 @@ class Article extends Component
 
             // Extraer la parte específica de la URL
             $url = 'Sin URL';
-            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link, a.uk-link-reset')->attr('href');
+            $href = $articulo->filter('.entry-title a, .td-image-wrap, .sp-pcp-thumb, a.extend-link, a.uk-link-reset, .fs-wi__title a, .fs-wis__title a')->attr('href');
 
             // Condicional para verificar si el URL tiene un esquema (http/https) y un dominio
             if (filter_var($href, FILTER_VALIDATE_URL)) {
@@ -267,6 +274,16 @@ class Article extends Component
                         $autor = $elementos->first()->text();
                     } else {
                         $autor = 'Diario Expreso';
+                    }
+                } elseif ($this->search === 'https://elcomercio.pe') {
+                    $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
+                    if ($elementos->count() > 0) {
+                        $autor = $elementos->text();
+                    } elseif ($elementos->count() > 0) {
+                        // Muestra un mensaje si no se encuentran elementos
+                        $autor = $elementos->first()->text();
+                    } else {
+                        $autor = 'Diario El Comercio';
                     }
                 } else {
                     $elementos = $articulo->filter('.td-post-author-name a, .fmm-author a, .ws-info a, .post-author-bd a');
@@ -553,6 +570,7 @@ class Article extends Component
                 }
 
                 $articulos = $datosExtraidos['articulos']; // Acceder al array de artículos
+                // dd($articulos);
 
                 foreach ($articulos as $articulo) {
                     // Extraer solo la primera parte del path antes del primer '/'
@@ -564,7 +582,7 @@ class Article extends Component
                     } elseif ($this->search === 'https://larepublica.pe') {
                         $pathParts = explode('/', trim($articulo['path'], '/')); // Elimina los '/' extra al principio y al final
                         $categoriaPath = $pathParts[0];
-                        if ($categoriaPath === 'nota-de-prensa' || $categoriaPath === 'estados-unidos') {
+                        if ($categoriaPath === 'nota-de-prensa' || $categoriaPath === 'estados-unidos' || $categoriaPath === 'domingo') {
                             continue; // Salta al siguiente artículo
                         }
                         $categoriaSlug = Category::where('slug', $categoriaPath)->first();
@@ -575,6 +593,22 @@ class Article extends Component
                             continue; // Salta al siguiente artículo si no hay imagen
                         }
                         $categoriaFinal = $articulo['categoria'];
+                    } elseif ($this->search === 'https://elcomercio.pe') {
+                        $pathParts = explode('/', trim($articulo['path'], '/')); // Elimina los '/' extra al principio y al final
+                        $categoriaPath = $pathParts[0];
+
+                        Category::updateOrCreate(
+                            [
+                                'url' => $this->search . '/' . $categoriaPath,
+                            ],
+                            [
+                                'urlPrincipal' => $this->search . '/',
+                                'name' => strtoupper($categoriaPath),
+                                'slug' => $categoriaPath,
+                            ],
+                        );
+
+                        $categoriaFinal = strtoupper(str_replace('-', ' ', $categoriaPath));
                     }
 
                     // Si la categoría es válida, registra el artículo

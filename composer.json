@@ -6,7 +6,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "^3.0",
+        "chillerlan/php-qrcode": "^5.0",
+        "endroid/qr-code": "^5.0",
         "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^11.9",
         "laravel/jetstream": "^5.1",
@@ -15,6 +18,7 @@
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.0",
         "maatwebsite/excel": "^3.1",
+        "paypal/rest-api-sdk-php": "1.6",
         "spatie/laravel-permission": "^6.9",
         "symfony/dom-crawler": "^7.1",
         "usernotnull/tall-toasts": "^2.1"
