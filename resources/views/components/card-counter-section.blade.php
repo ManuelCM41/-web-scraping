@@ -24,7 +24,11 @@
         <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ $label }}</h2>
         <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase mb-1">un total de</div>
         <div class="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
-            <x-counter-animation>{{ $counter }}</x-counter-animation>
+            @if ($counter <= 2)
+                {{ $counter }}
+            @else
+                <x-counter-animation>{{ $counter }}</x-counter-animation>
+            @endif
         </div>
     </div>
     <div class="flex flex-col justify-between items-end">

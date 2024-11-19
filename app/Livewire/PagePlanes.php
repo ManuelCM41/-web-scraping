@@ -11,6 +11,7 @@ class PagePlanes extends Component
     public $flashMessage;
     public $modalMessage;
     public $selectedCurrency = 'PEN';
+    public $showModal = false;
 
     protected $listeners = ['redirectToCliente', 'mostrarModal'];
 
@@ -26,7 +27,7 @@ class PagePlanes extends Component
     public function mostrarModal($message)
     {
         $this->modalMessage = $message;
-        $this->dispatchBrowserEvent('mostrarModal');
+        // $this->dispatchBrowserEvent('mostrarModal');
     }
 
     public function iniciarPago($nombrePlan, $precioPlan)
@@ -36,7 +37,7 @@ class PagePlanes extends Component
             $authenticatedUser = Auth::user();
 
             // Verificación: ¿El usuario tiene su correo electrónico verificado?
-            if ($authenticatedUser->email_verified_at != null) {
+            if ($authenticatedUser->email != null) {
                 // Lógica para iniciar el proceso de pago
                 $this->pagoIniciado = true;
 
@@ -52,8 +53,9 @@ class PagePlanes extends Component
                 $this->dispatch('mostrarModalGmail', $message);
             }
         } else {
-            $message = trans('modales.¡Para continuar, necesitas Iniciar Sesión!');
-            $this->dispatch('mostrarModal', $message);
+            $this->openModal();
+            // $message = trans('modales.¡Para continuar, necesitas Iniciar Sesión!');
+            // $this->dispatch('mostrarModal', $message);
         }
     }
 
@@ -63,6 +65,11 @@ class PagePlanes extends Component
         return redirect()->route('cliente', ['total' => $total]);
     }
 
+    public function openModal()
+    {
+        $this->showModal = true;
+    }
+
     public function render()
     {
         session()->forget('voucher');
@@ -70,6 +77,8 @@ class PagePlanes extends Component
         session()->forget('client_data');
         session()->forget('client');
 
-        return view('pages.plan.planes');
+        $user = Auth::user();
+
+        return view('pages.plan.planes', compact('user'));
     }
 }

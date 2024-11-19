@@ -241,7 +241,7 @@ class Article extends Component
                 if ($pathPri !== null) {
                     $pathSinBarras = preg_replace('#^/+#', '', $pathPri);
                 } else {
-                    $pathSinBarras = preg_replace('#^/+#', '', $pathPri);
+                    $pathSinBarras = "";
                 }
 
                 if ($urlPrincipal === 'https://losandes.com.pe/') {

@@ -1,8 +1,8 @@
 <div class="relative w-full max-w-2xl px-2 lg:max-w-7xl mx-auto pb-5">
-    <header class="flex justify-around items-center gap-2 py-5">
+    <header class="grid grid-cols-3 gap-4 py-5">
 
         <a href="/">
-            <div class="flex lg:justify-center lg:col-start-2 gap-5 items-center">
+            <div class="flex gap-5 items-center">
                 <svg class="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]" viewBox="0 0 62 65" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -13,11 +13,17 @@
             </div>
         </a>
 
+        <div class="flex gap-4 items-center justify-center">
+            <a href="{{ route('articles') }}" class="hover:text-red-600">
+                <span class="text-md">Inicio</span>
+            </a>
+            <a href="{{ route('planes') }}" class="hover:text-red-600">
+                <span class="text-md">Planes</span>
+            </a>
+        </div>
+
         @if (Route::has('login'))
-            <nav class="-mx-3 flex flex-1 justify-end gap-3 items-center">
-                <a href="{{ route('planes') }}">
-                    <span class="text-md">Planes</span>
-                </a>
+            <nav class="flex flex-1 justify-end gap-3 items-center">
                 @auth
                     <a href="{{ route('admin.home') }}"
                         class="rounded-lg px-4 py-2 text-white font-semibold transition duration-300 ease-in-out transform bg-gradient-to-r from-[#FF2D20] to-[#FF6A3D] shadow-lg hover:shadow-xl hover:from-[#FF6A3D] hover:to-[#FF2D20] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF2D20]">
@@ -40,89 +46,104 @@
         @endif
     </header>
 
-    <div class="bg-white rounded-md" style="font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: auto;">
+    <x-card>
+
+        <x-toasts :showModal="$showModal" />
+
         <!-- TÍTULO Y DESCRIPCIÓN -->
-        <div style="text-align: center; margin-bottom: 40px;">
+        <div class="text-center mb-4">
             <!-- TÍTULO -->
-            <h2 style="font-size: 2.5rem; color: #333; margin-bottom: 10px;">Nuestros Planes</h2>
+            <h2 class="text-3xl mb-4">Nuestros Planes</h2>
             <!-- DESCRIPCIÓN -->
-            <p style="font-size: 1.1rem; color: #666; line-height: 1.5;">
+            <p class="text-md">
                 Escoge el plan que se ajuste a tus necesidades. Desde opciones gratuitas hasta funciones avanzadas para
                 llevar tu experiencia al siguiente nivel.
             </p>
         </div>
 
         <!-- PLANES: FREE - PRO - PRO MAX -->
-        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+        <div class="flex gap-5 justify-center mb-4">
             <!-- PLAN FREE -->
             <div
-                style="flex: 1; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h3 style="font-size: 1.8rem; color: #2ECC71;">Free</h3>
-                <p style="color: #555; font-size: 1rem; margin-bottom: 20px;">
-                    Ideal para comenzar, con características básicas para explorar nuestra plataforma.
-                </p>
-                <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
-                    <li>✔ Acceso limitado</li>
-                    <li>✔ Soporte básico</li>
-                    <li>✔ Hasta 1 Diario</li>
-                    <li>✔ Hasta 3 veces de Scrapeo</li>
-                </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #2ECC71;">S/0.00/mes</p>
-                <button wire:click="iniciarPago('Free', 0)"
-                    style="padding: 10px 20px; background-color: #2ECC71; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
-                    Empezar Gratis
-                </button>
+                class="p-5 text-center rounded-lg border shadow-lg max-w-xs hover:scale-[1.04] duration-300 bg-green-600">
+                <div class="bg-white rounded-lg py-4 px-3">
+                    <h3 class="text-3xl text-green-600">Free</h3>
+                    <p class="text-sm mb-1">
+                        Ideal para comenzar, con características básicas para explorar nuestra plataforma.
+                    </p>
+                    <ul class="py-1 px-2 text-left text-sm">
+                        <li>✔ Acceso limitado</li>
+                        <li>✔ Soporte básico</li>
+                        <li>✔ Hasta 1 Diario</li>
+                        <li>✔ Hasta 3 veces de Scrapeo</li>
+                    </ul>
+                    <p class="text-lg text-green-600 font-bold mb-2">S/0.00 x mes</p>
+                    <button wire:click="iniciarPago('Free', 0)" class="px-5 py-3 bg-green-600 text-white rounded-lg"
+                        @if ($user && $user->membership_id >= 1) disabled @endif>
+                        @if ($user && $user->membership_id >= 1)
+                            Ya lo tienes
+                        @else
+                            Empezar Gratis
+                        @endif
+                    </button>
+                </div>
             </div>
 
             <!-- PLAN PRO -->
             <div
-                style="flex: 1; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h3 style="font-size: 1.8rem; color: #3498DB;">Pro</h3>
-                <p style="color: #555; font-size: 1rem; margin-bottom: 20px;">
-                    Perfecto para usuarios avanzados que buscan herramientas adicionales y mayor flexibilidad.
-                </p>
-                <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
-                    <li>✔ Acceso completo</li>
-                    <li>✔ Soporte prioritario</li>
-                    <li>✔ Hasta 2 Diarios</li>
-                    <li>✔ Hasta 10 veces de Scrapeo</li>
-                </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #3498DB;">S/15.00/mes</p>
-                <button wire:click="iniciarPago('Pro', 10)"
-                    style="padding: 10px 20px; background-color: #3498DB; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
-                    Suscribirse
-                </button>
+                class="p-5 text-center rounded-lg border shadow-lg max-w-xs hover:scale-[1.04] duration-300 bg-blue-600">
+                <div class="bg-white rounded-lg py-4 px-3">
+                    <h3 class="text-3xl text-blue-600">Pro</h3>
+                    <p class="text-sm mb-1">
+                        Perfecto para usuarios avanzados que buscan herramientas adicionales y mayor flexibilidad.
+                    </p>
+                    <ul class="py-1 px-2 text-left text-sm">
+                        <li>✔ Acceso completo</li>
+                        <li>✔ Soporte prioritario</li>
+                        <li>✔ Hasta 2 Diarios</li>
+                        <li>✔ Hasta 10 veces de Scrapeo</li>
+                    </ul>
+                    <p class="text-lg text-blue-600 font-bold mb-2">S/15.00 x mes</p>
+                    <button wire:click="iniciarPago('Pro', 15)" class="px-5 py-3 bg-blue-600 text-white rounded-lg"
+                        @if ($user && $user->membership_id >= 2) disabled @endif>
+                        @if ($user && $user->membership_id >= 2)
+                            Ya lo tienes
+                        @else
+                            Suscribirse
+                        @endif
+                    </button>
+                </div>
             </div>
 
             <!-- PLAN PRO MAX -->
             <div
-                style="flex: 1; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h3 style="font-size: 1.8rem; color: #E74C3C;">Pro Max</h3>
-                <p style="color: #555; font-size: 1rem; margin-bottom: 20px;">
-                    Diseñado para equipos o usuarios con necesidades avanzadas. ¡Lleva tu proyecto al siguiente nivel!
-                </p>
-                <ul style="list-style: none; padding: 0; color: #444; text-align: left; margin-bottom: 20px;">
-                    <li>✔ Acceso total</li>
-                    <li>✔ Soporte 24/7</li>
-                    <li>✔ Hasta 5 Diarios</li>
-                    <li>✔ Hasta 20 veces de Scrapeo</li>
-                </ul>
-                <p style="font-size: 1.5rem; font-weight: bold; color: #E74C3C;">S/30.00/mes</p>
-                <button wire:click="iniciarPago('Pro Max', 30)"
-                    style="padding: 10px 20px; background-color: #E74C3C; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
-                    Unirse Ahora
-                </button>
+                class="p-5 text-center rounded-lg border shadow-lg max-w-xs hover:scale-[1.04] duration-300 bg-red-600">
+                <div class="bg-white rounded-lg py-4 px-3">
+                    <h3 class="text-3xl text-red-600">Pro</h3>
+                    <p class="text-sm mb-1">
+                        Diseñado para equipos o usuarios con necesidades avanzadas. ¡Lleva tu proyecto al siguiente
+                        nivel!
+                    </p>
+                    <ul class="py-1 px-2 text-left text-sm">
+                        <li>✔ Acceso total</li>
+                        <li>✔ Soporte 24/7</li>
+                        <li>✔ Hasta 5 Diarios</li>
+                        <li>✔ Hasta 20 veces de Scrapeo</li>
+                    </ul>
+                    <p class="text-lg text-red-600 font-bold mb-2">S/30.00 x mes</p>
+                    <button wire:click="iniciarPago('Pro Max', 30)" class="px-5 py-3 bg-red-600 text-white rounded-lg"
+                        @if ($user && $user->membership_id == 3) disabled @endif>
+                        @if ($user && $user->membership_id == 3)
+                            Ya lo tienes
+                        @else
+                            Unirse Ahora
+                        @endif
+                    </button>
+                </div>
             </div>
-
-            <script>
-                Livewire.on('redirectToCliente', total => {
-                    // Verifica el valor de total antes de la redirección
-                    console.log('Total:', total);
-
-                    // Realiza la redirección utilizando JavaScript
-                    window.location.href = '/cliente/' + total;
-                });
-            </script>
         </div>
-    </div>
+        <div class="text-center">
+            Elige tu mejor opción
+        </div>
+    </x-card>
 </div>

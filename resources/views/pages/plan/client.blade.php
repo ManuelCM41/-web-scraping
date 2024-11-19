@@ -1,8 +1,8 @@
 <div class="relative w-full max-w-2xl px-2 lg:max-w-7xl mx-auto pb-5">
-    <header class="flex justify-around items-center gap-2 py-5">
+    <header class="grid grid-cols-3 gap-4 py-5">
 
         <a href="/">
-            <div class="flex lg:justify-center lg:col-start-2 gap-5 items-center">
+            <div class="flex gap-5 items-center">
                 <svg class="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]" viewBox="0 0 62 65" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -13,11 +13,17 @@
             </div>
         </a>
 
+        <div class="flex gap-4 items-center justify-center">
+            <a href="{{ route('articles') }}" class="hover:text-red-600">
+                <span class="text-md">Inicio</span>
+            </a>
+            <a href="{{ route('planes') }}" class="hover:text-red-600">
+                <span class="text-md">Planes</span>
+            </a>
+        </div>
+
         @if (Route::has('login'))
-            <nav class="-mx-3 flex flex-1 justify-end gap-3 items-center">
-                <a href="{{ route('planes') }}">
-                    <span class="text-md">Planes</span>
-                </a>
+            <nav class="flex flex-1 justify-end gap-3 items-center">
                 @auth
                     <a href="{{ route('admin.home') }}"
                         class="rounded-lg px-4 py-2 text-white font-semibold transition duration-300 ease-in-out transform bg-gradient-to-r from-[#FF2D20] to-[#FF6A3D] shadow-lg hover:shadow-xl hover:from-[#FF6A3D] hover:to-[#FF2D20] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF2D20]">
@@ -55,8 +61,29 @@
                             <div class="flex items-center">
                                 <form autocomplete="off" class="padre w-full max-w-lg">
                                     <input type="hidden" wire:model="client.id" value="{{ $total }}">
-
-                                    <div class="flex flex-wrap -mx-3 mt-6">
+                                    <div class="w-full md:w-12/12 md:mb-0 mt-6">
+                                        <label class="">
+                                            DNI
+                                        </label>
+                                        <div class="flex gap-2">
+                                            <input wire:model="client.document"
+                                                class="appearance-none block w-full rounded-lg text-black border border-gray-400  py-2 px-2  mb-3 leading-tight focus:outline-none focus:bg-white"
+                                                type="tel" pattern="[0-9]*" placeholder=" "
+                                                oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                                maxlength="8">
+                                            <button wire:click.prevent="buscarPersona()" wire:target="buscarPersona" type="submit"
+                                                class="p-2 bg-green-600 text-white rounded flex-none h-max">
+                                                <i class="fa fa-search"></i> Buscar
+                                            </button>
+                                        </div>
+                                        @if (empty($client['document']))
+                                            <x-input-error for="client.document">DNI es
+                                                obligatorio.</x-input-error>
+                                        @elseif (strlen($client['document']) !== 9)
+                                            <x-input-error for="client.document" />
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-wrap -mx-3">
                                         <div class="w-full md:w-12/12 px-3 md:mb-0">
                                             <label class="">
                                                 Correo Electrónico
@@ -109,20 +136,6 @@
                                         </div>
                                     </div>
 
-                                    <div class="w-full md:w-12/12 md:mb-0">
-                                        <label class="">
-                                            DNI
-                                        </label>
-                                        <input wire:model="client.document"
-                                            class="appearance-none block w-full rounded-lg text-black border border-gray-400  py-2 px-2  mb-3 leading-tight focus:outline-none focus:bg-white"
-                                            type="tel" pattern="[0-9]*" placeholder=" "
-                                            oninput="this.value = this.value.replace(/[^0-9]/g, '');" maxlength="8">
-                                        @if (empty($client['document']))
-                                            <x-input-error for="client.document">DNI es obligatorio.</x-input-error>
-                                        @elseif (strlen($client['document']) !== 9)
-                                            <x-input-error for="client.document" />
-                                        @endif
-                                    </div>
                                     <div class="w-full md:w-12/12 md:mb-0 mt-5">
                                         <label class="flex text-sm items-center justify-center">
                                             <input wire:model="client.tdatos" class="mr-2 cursor-pointer"
@@ -226,7 +239,8 @@
                                 <div class="grid grid-cols-2 gap-4 m-5">
                                     <button wire:click.prevent="storePaypal()" wire:target="storePaypal"
                                         class="border rounded-md p-2 hover:shadow-md transition">
-                                        <img class="rounded-md" src="/images/pay/pay_paypal.png" alt="Pago con PayPal">
+                                        <img class="rounded-md" src="/images/pay/pay_paypal.png"
+                                            alt="Pago con PayPal">
                                     </button>
                                     <a href="#" class="border rounded-md p-2" disabled>
                                         <img class="rounded-md" src="/images/pay/pay_pagoefectivo.png"
